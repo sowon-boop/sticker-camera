@@ -281,7 +281,7 @@ const svg = (inner, vb="0 0 400 400") =>
 
 const OVERLAYS = [
   { id:"none", name:"없음", type:"none" },
-  { id:"kaito_v", name:"괴도키드✌️", type:"sticker", w:230, src:"stickers/kaito-kid-v3.png" },
+  { id:"kaito_v", name:"괴도키드✌️", type:"sticker", w:230, filter:true, src:"stickers/kaito-kid-v3.png" },
   { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, src:"stickers/kaito-kid-poke6.png" },
 ];
 
@@ -731,7 +731,7 @@ const KID = (()=>{
   const HAT_ANCHOR_X = 0.50;
   const HAT_ANCHOR_Y = 0.60;
   // 모자 폭 = 눈사이거리 * 배수. 실크햇 챙이 얼굴보다 넓으므로 크게.
-  const HAT_WIDTH_MULT = 5.2;
+  const HAT_WIDTH_MULT = 3.4;
   // 앵커를 눈 라인 위로 얼마나 올릴지 (눈사이거리 대비). 이마 위.
   const HAT_LIFT_MULT = 1.15;
 
