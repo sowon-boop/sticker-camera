@@ -391,8 +391,13 @@ function onPick(o, chip){
     if(existing){ removeSticker(existing); chip.classList.remove('active'); }
     else {
       const r=stage.getBoundingClientRect();
-      const p=o.preset||{};
-      addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale:p.scale??1.3, rot:0}, true);
+      const saved=fpos[o.id];
+      if(saved){
+        addStickerEx(o, {cx:r.width*saved.fx, cy:r.height*saved.fy, scale:saved.scale, rot:saved.rot||0}, true);
+      } else {
+        const p=o.preset||{};
+        addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale:p.scale??1.3, rot:0}, true);
+      }
       chip.classList.add('active');
     }
     return;
@@ -659,11 +664,24 @@ function getLayout(){
   return { frame: activeFrame?activeFrame.id:null, mirror, stickers };
 }
 const AUTOKEY='camframe_autosave_v1';
+const FPOSKEY='camframe_filterpos_v1';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
+function loadFpos(){ try{ return JSON.parse(localStorage.getItem(FPOSKEY)||'{}'); }catch(e){ return {}; } }
+let fpos = loadFpos();
 let _autoT=null;
 function autosave(){
   if(!storageOK()) return;
   clearTimeout(_autoT);
-  _autoT=setTimeout(()=>{ try{ localStorage.setItem(AUTOKEY, JSON.stringify(getLayout())); }catch(e){} }, 300);
+  _autoT=setTimeout(()=>{
+    try{
+      localStorage.setItem(AUTOKEY, JSON.stringify(getLayout()));
+      // 화면에 있는 각 스티커의 위치·크기를 id별로 기억 → 다음에 탭하면 그대로 뜸
+      const r=stage.getBoundingClientRect();
+      if(r.width) [...layer.querySelectorAll('.sticker')].forEach(el=>{
+        fpos[el.dataset.id]={fx:(+el.dataset.cx)/r.width, fy:(+el.dataset.cy)/r.height, scale:+el.dataset.scale, rot:+el.dataset.rot};
+      });
+      localStorage.setItem(FPOSKEY, JSON.stringify(fpos));
+    }catch(e){}
+  }, 300);
 }
 function applyLayout(d){
   layer.innerHTML=''; frameLayer.innerHTML=''; activeFrame=null; stickerCount=0; select(null);
