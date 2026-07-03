@@ -881,8 +881,8 @@ function getLayout(){
     scale:+el.dataset.scale, rot:+el.dataset.rot }));
   return { frame: activeFrame?activeFrame.id:null, mirror, stickers };
 }
-const AUTOKEY='camframe_autosave_v4';   // v4: 안정화(고정 비율 위치·크기)로 마지막 초기화. 이후 저장값 유지.
-const FPOSKEY='camframe_filterpos_v4';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
+const AUTOKEY='camframe_autosave_v5';   // v5: 가장자리 붙이기 기본배치 적용 위해 옛 위치값 1회 폐기
+const FPOSKEY='camframe_filterpos_v5';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
 function loadFpos(){ try{ return JSON.parse(localStorage.getItem(FPOSKEY)||'{}'); }catch(e){ return {}; } }
 let fpos = loadFpos();
 let _autoT=null;
