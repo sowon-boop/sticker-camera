@@ -383,9 +383,16 @@ async function startCamera(){
   showMsg("카메라를 준비하고 있어요…", false);
   stopStream();
   try{
-    stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode: facing, width:{ideal:1280}, height:{ideal:1707} }, audio:false
-    });
+    // resizeMode:'none' → 브라우저가 센서를 크롭/스케일하지 않고 원본 화각 그대로 주도록 요청(지원 시 확대 완화)
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode: facing, resizeMode:'none', width:{ideal:1920}, height:{ideal:1920} }, audio:false
+      });
+    }catch(_){
+      stream = await navigator.mediaDevices.getUserMedia({
+        video:{ facingMode: facing }, audio:false
+      });
+    }
     // 전면 카메라 기본 확대 완화: 지원되면 줌을 최소(가장 넓은 화각)로.
     try{
       const track = stream.getVideoTracks()[0];
