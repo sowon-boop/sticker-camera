@@ -344,7 +344,6 @@ const OVERLAYS = [
   { id:"kaito_ar", name:"모자변신🎩", type:"ar", arItem:"hat", src:"stickers/kaito-hat-only.png" },
   { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses4.png" },
   { id:"conan_bowtie", name:"나비넥타이🎀", type:"ar", arItem:"bowtie", src:"stickers/conan-bowtie3.png" },
-  { id:"conan_outfit", name:"코난 옷🧥", type:"ar", arItem:"outfit", src:"stickers/conan-outfit.png" },
 ];
 
 /* ============ 상태 ============ */
@@ -941,15 +940,9 @@ const KID = (()=>{
   const GLASS_ANCHOR_Y = 0.50;
   const GLASS_LIFT_MULT = -0.13;   // 눈라인 위/아래 미세조정 (양수=위로, 음수=아래로). 살짝 내려씀.
   const BOWTIE_SRC = "stickers/conan-bowtie3.png";     // 코난 빨간 나비넥타이(레퍼런스 기반) → 턱 아래 목
-  const OUTFIT_SRC = "stickers/conan-outfit.png";      // 코난 옷(파란 재킷+나비넥타이) → 턱 아래 상체
   // 나비넥타이: 폭=눈사이거리*배수, drop=턱에서 아래로
   const BOW_WIDTH_MULT = 1.25;
   const BOW_DROP = 0.8;
-  // 옷: 폭=얼굴(턱)폭*배수, drop=턱에서 아래로, 앵커 Y=이미지 위쪽(칼라)
-  const OUTFIT_WIDTH_MULT = 2.7;
-  const OUTFIT_DROP = 0.75;   // 턱에서 목 길이만큼 아래로 (칼라가 목 밑에 오도록)
-  const OUTFIT_ANCHOR_X = 0.50;
-  const OUTFIT_ANCHOR_Y = 0.06;
 
   // ── 튜너블 (배치 미세조정) ──
   // 모자: 폭=눈사이거리*배수, lift=눈라인 위로 올림, 앵커=이미지 내 '머리에 얹히는' 지점
@@ -967,17 +960,16 @@ const KID = (()=>{
   const arCtx = arOverlay.getContext('2d');
   const kidBtn = document.getElementById('kidBtn');  // 헤더 버튼 제거됨 → null 가능 (트레이 칩으로 토글)
 
-  const items = { hat:false, glasses:false, bowtie:false, outfit:false };   // 얼굴 트래킹 아이템별 on/off
-  const anyOn = ()=> items.hat || items.glasses || items.bowtie || items.outfit;
+  const items = { hat:false, glasses:false, bowtie:false };   // 얼굴 트래킹 아이템별 on/off
+  const anyOn = ()=> items.hat || items.glasses || items.bowtie;
   let landmarker=null, loading=false, loadFailed=false;
-  let hatImg=null, glassesImg=null, bowtieImg=null, outfitImg=null, rafId=null, lastVideoTime=-1, lastFaces=[];
+  let hatImg=null, glassesImg=null, bowtieImg=null, rafId=null, lastVideoTime=-1, lastFaces=[];
 
   function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
   async function ensureAsset(item){
     if(item==='hat' && !hatImg) hatImg=await loadImg(HAT_SRC);
     if(item==='glasses' && !glassesImg) glassesImg=await loadImg(GLASSES_SRC);
     if(item==='bowtie' && !bowtieImg) bowtieImg=await loadImg(BOWTIE_SRC);
-    if(item==='outfit' && !outfitImg) outfitImg=await loadImg(OUTFIT_SRC);
   }
 
   async function ensureModel(){
@@ -1051,18 +1043,7 @@ const KID = (()=>{
     ctx.save(); ctx.translate(ax,ay); ctx.rotate(f.roll);
     ctx.drawImage(bowtieImg, -w*0.5, -h*0.5, w, h); ctx.restore();
   }
-  function drawOutfit(ctx, cw, ch, lm){
-    if(!outfitImg || !lm) return;
-    const f=faceFrame(lm,cw,ch);
-    const down={x:-Math.sin(f.roll), y:Math.cos(f.roll)};
-    const off=f.interI*OUTFIT_DROP;
-    const ax=f.chin.x+down.x*off, ay=f.chin.y+down.y*off;
-    const w=f.faceW*OUTFIT_WIDTH_MULT, h=w*(outfitImg.naturalHeight/outfitImg.naturalWidth);
-    ctx.save(); ctx.translate(ax,ay); ctx.rotate(f.roll);
-    ctx.drawImage(outfitImg, -w*OUTFIT_ANCHOR_X, -h*OUTFIT_ANCHOR_Y, w, h); ctx.restore();
-  }
   function drawAll(ctx, cw, ch, lm){
-    if(items.outfit) drawOutfit(ctx,cw,ch,lm);   // 몸통(맨 아래)
     if(items.bowtie) drawBowtie(ctx,cw,ch,lm);
     if(items.glasses) drawGlasses(ctx,cw,ch,lm);
     if(items.hat) drawHat(ctx,cw,ch,lm);          // 모자(맨 위)
