@@ -274,7 +274,7 @@ const svg = (inner, vb="0 0 400 400") =>
 const OVERLAYS = [
   { id:"none", name:"없음", type:"none" },
   { id:"kaito_v", name:"괴도키드✌️", type:"sticker", w:230, src:"stickers/kaito-kid-v3.png" },
-  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, src:"stickers/kaito-kid-poke6.png" },
+  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, src:"stickers/kaito-kid-poke6.png" },
 ];
 
 /* ============ 상태 ============ */
@@ -374,6 +374,17 @@ function onPick(o, chip){
     frameLayer.innerHTML = `<img src="${o.src}" alt="">`;
     setActiveChip(chip);
     updateClear();
+    return;
+  }
+  // 고정 필터 스티커: 탭하면 정해진 위치·크기로 하나만 뜨고, 다시 탭하면 사라짐 (스택 안 됨)
+  if(o.filter){
+    const existing=[...layer.querySelectorAll('.sticker')].find(el=>el.dataset.id===o.id);
+    if(existing){ removeSticker(existing); chip.classList.remove('active'); }
+    else {
+      const r=stage.getBoundingClientRect();
+      addStickerEx(o, {cx:r.width*0.42, cy:r.height*0.5, scale:1.3, rot:0}, true);
+      chip.classList.add('active');
+    }
     return;
   }
   // sticker: add a new draggable instance
