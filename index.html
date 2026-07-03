@@ -341,7 +341,7 @@ const OVERLAYS = [
   { id:"conan_kid_v", name:"코난&키드✌️", type:"group", src:"stickers/kaito-conan-v.png",
     items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.27, scale:1.05},
             {src:"stickers/kaito-conan-v.png", w:240, fx:0.73, scale:1.0} ] },
-  { id:"kaito_ar", name:"모자변신🎩", type:"ar", arItem:"hat", src:"stickers/kaito-hat-only.png" },
+  { id:"kaito_ar", name:"모자변신🎩", type:"ar", arItem:"hat", src:"stickers/kaito-hat2.png" },
   { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses4.png" },
   { id:"conan_bowtie", name:"나비넥타이🎀", type:"ar", arItem:"bowtie", src:"stickers/conan-bowtie3.png" },
 ];
@@ -931,7 +931,7 @@ const KID = (()=>{
   const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
   const WASM_URL = `${MP_BASE}/wasm`;
   const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-  const HAT_SRC = "stickers/kaito-hat-only.png";       // 모자만 (모노클 없음)
+  const HAT_SRC = "stickers/kaito-hat2.png";           // 괴도키드 실크햇 (레퍼런스 기반: 흰 톱햇+파란 밴드)
   const MONOCLE_SRC = "stickers/kaito-monocle.png";    // 모노클 따로 → 눈에 트래킹
   const GLASSES_SRC = "stickers/conan-glasses4.png";   // 코난 안경(레퍼런스 기반 라운드 사각) → 두 눈에 트래킹
   // 안경: 폭=눈 바깥 코너 사이거리*배수, 앵커=이미지 내 렌즈 중심(가운데)
