@@ -284,8 +284,11 @@ const OVERLAYS = [
   { id:"kaito_v", name:"괴도키드✌️", type:"sticker", w:230, filter:true, src:"stickers/kaito-kid-v3.png" },
   { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, src:"stickers/kaito-kid-poke6.png" },
   { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.55, scale:1.25}, src:"stickers/kaito-kid-kiss.png" },
-  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.4, scale:1.2}, src:"stickers/kaito-kid-hand2.png" },
-  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.38, scale:1.25}, src:"stickers/kaito-kid-half.png" },
+  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.4, scale:1.2}, src:"stickers/kaito-kid-hand3.png" },
+  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.38, scale:1.25}, src:"stickers/kaito-kid-half2.png" },
+  { id:"conan_kid_v", name:"코난&키드✌️", type:"group", src:"stickers/kaito-conan-v.png",
+    items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.27, scale:1.05},
+            {src:"stickers/kaito-conan-v.png", w:240, fx:0.73, scale:1.0} ] },
   { id:"kaito_ar", name:"모자변신🎩", type:"ar", src:"stickers/kaito-hat-only.png" },
 ];
 
@@ -394,16 +397,36 @@ function onPick(o, chip){
     KID.toggle().then(()=>{ chip.classList.remove('loading'); chip.classList.toggle('active', KID.on); });
     return;
   }
-  // 고정 필터: 한 번에 하나만. 탭하면 이전 필터는 사라지고 교체, 같은 걸 다시 탭하면 꺼짐. (각자 위치·크기 기억)
+  // 모든 필터/그룹 제거 (상호 배타적). 함수 선언이라 이 블록 위에서도 호출 가능(호이스팅).
+  function clearFilters(){
+    [...layer.querySelectorAll('.sticker')].forEach(el=>{
+      const ov=OVERLAYS.find(x=>x.id===el.dataset.id);
+      if((ov && ov.filter) || el.dataset.group) removeSticker(el);
+    });
+    [...tray.children].forEach(c=>{ const ov=OVERLAYS.find(x=>x.id===c.dataset.id); if(ov && (ov.filter || ov.type==='group')) c.classList.remove('active'); });
+  }
+  // 그룹 필터: 스티커 여러 개를 한 번에 (예: 코난+키드). 탭 토글, 상호 배타, 각 스티커 위치·크기 기억.
+  if(o.type==="group"){
+    const present=[...layer.querySelectorAll('.sticker')].filter(el=>el.dataset.group===o.id);
+    if(present.length){ present.forEach(removeSticker); chip.classList.remove('active'); return; }
+    clearFilters();
+    const r=stage.getBoundingClientRect();
+    (o.items||[]).forEach((it,idx)=>{
+      const itemId=o.id+'__'+idx;
+      const s=fpos[itemId];
+      const tf = s ? {cx:r.width*s.fx, cy:r.height*s.fy, scale:s.scale, rot:s.rot||0}
+                   : {cx:r.width*(it.fx??0.5), cy:r.height*(it.fy??0.5), scale:it.scale??1, rot:0};
+      const el=addStickerEx({id:itemId, w:it.w||240, src:it.src}, tf, false);
+      el.dataset.group=o.id;
+    });
+    chip.classList.add('active');
+    return;
+  }
+  // 고정 필터: 한 번에 하나만. 탭하면 교체, 같은 걸 다시 탭하면 꺼짐. (각자 위치·크기 기억)
   if(o.filter){
     const existing=[...layer.querySelectorAll('.sticker')].find(el=>el.dataset.id===o.id);
     if(existing){ removeSticker(existing); chip.classList.remove('active'); return; }
-    // 다른 필터가 떠 있으면 먼저 제거 (필터는 상호 배타적)
-    [...layer.querySelectorAll('.sticker')].forEach(el=>{
-      const ov=OVERLAYS.find(x=>x.id===el.dataset.id);
-      if(ov && ov.filter) removeSticker(el);
-    });
-    [...tray.children].forEach(c=>{ const ov=OVERLAYS.find(x=>x.id===c.dataset.id); if(ov && ov.filter) c.classList.remove('active'); });
+    clearFilters();
     const r=stage.getBoundingClientRect();
     const saved=fpos[o.id];
     if(saved){
