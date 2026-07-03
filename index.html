@@ -799,7 +799,7 @@ const KID = (()=>{
   const kidBtn = document.getElementById('kidBtn');  // 헤더 버튼 제거됨 → null 가능 (트레이 칩으로 토글)
 
   let on=false, landmarker=null, loading=false, loadFailed=false;
-  let hatImg=null, monocleImg=null, rafId=null, lastVideoTime=-1, lastFace=null;
+  let hatImg=null, monocleImg=null, rafId=null, lastVideoTime=-1, lastFaces=[];
 
   function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
   async function loadAssets(){ if(!hatImg) hatImg=await loadImg(HAT_SRC); if(!monocleImg) monocleImg=await loadImg(MONOCLE_SRC); }
@@ -814,7 +814,7 @@ const KID = (()=>{
       const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
       landmarker = await FaceLandmarker.createFromOptions(fileset, {
         baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-        runningMode: "VIDEO", numFaces: 1,
+        runningMode: "VIDEO", numFaces: 5,
       });
     }catch(err){ loadFailed=true; console.warn('[괴도키드] 모델 로드 실패 — AR 없이 계속', err); }
     finally{ loading=false; kidBtn && kidBtn.classList.remove('loading'); }
@@ -873,13 +873,13 @@ const KID = (()=>{
     if(!on) return;
     rafId=requestAnimationFrame(loop);
     if(!landmarker) return;
-    if(mode!=="camera"||!video.videoWidth){ lastFace=null; clearOverlay(); return; }
+    if(mode!=="camera"||!video.videoWidth){ lastFaces=[]; clearOverlay(); return; }
     if(video.currentTime===lastVideoTime) return;
     lastVideoTime=video.currentTime;
     let res=null; try{ res=landmarker.detectForVideo(video, performance.now()); }catch(e){ return; }
     const {w,h}=sizeOverlay(); arCtx.clearRect(0,0,w,h);
-    if(res && res.faceLandmarks && res.faceLandmarks.length){ lastFace=res.faceLandmarks[0]; drawAll(arCtx,w,h,lastFace); }
-    else lastFace=null;
+    if(res && res.faceLandmarks && res.faceLandmarks.length){ lastFaces=res.faceLandmarks; lastFaces.forEach(f=>drawAll(arCtx,w,h,f)); }
+    else lastFaces=[];
   }
 
   async function enable(){
@@ -890,13 +890,13 @@ const KID = (()=>{
   }
   function disable(){
     on=false; stage.classList.remove('ar-on'); kidBtn && kidBtn.classList.remove('on');
-    if(rafId){ cancelAnimationFrame(rafId); rafId=null; } lastFace=null; clearOverlay();
+    if(rafId){ cancelAnimationFrame(rafId); rafId=null; } lastFaces=[]; clearOverlay();
   }
   async function toggle(){ if(on) disable(); else await enable(); return on; }
   kidBtn && kidBtn.addEventListener('click', ()=>toggle());
 
   // 캡처: 현재 얼굴에 모자+모노클을 대상 ctx(미러 블록 안)에 그린다.
-  function captureDraw(targetCtx, W, H){ if(!on || !lastFace) return; drawAll(targetCtx, W, H, lastFace); }
+  function captureDraw(targetCtx, W, H){ if(!on || !lastFaces.length) return; lastFaces.forEach(f=>drawAll(targetCtx, W, H, f)); }
 
   return { get on(){ return on; }, captureDraw, toggle };
 })();
