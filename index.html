@@ -61,7 +61,7 @@
     max-height:100%;
   }
   #video,#photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none;}
-  .stage.mirror #video,.stage.mirror #photo,.stage.mirror #layer{transform:scaleX(-1);}
+  .stage.mirror #video,.stage.mirror #photo{transform:scaleX(-1);}
   #layer{position:absolute;inset:0;overflow:hidden;}
   .sticker{
     position:absolute;touch-action:none;cursor:grab;will-change:transform;
@@ -535,12 +535,10 @@ window.addEventListener('pointermove', e=>{
   if(gmode==='pinch' && selected){
     const p=[...ptrs.values()]; if(p.length<2) return;
     selected.dataset.scale=clamp(gstart.scale*(dist(p[0],p[1])/gstart.dist),.2,6);
-    const f=mirror?-1:1;
-    selected.dataset.rot=gstart.rot+(angle(p[0],p[1])-gstart.ang)*f;
+    selected.dataset.rot=gstart.rot+(angle(p[0],p[1])-gstart.ang);
     applyTransform(selected); moved=true;
   } else if(gmode==='drag' && selected && e.pointerId===dragId){
-    const f=mirror?-1:1;
-    selected.dataset.cx=gstart.cx+(e.clientX-gstart.px)*f;
+    selected.dataset.cx=gstart.cx+(e.clientX-gstart.px);
     selected.dataset.cy=gstart.cy+(e.clientY-gstart.py);
     applyTransform(selected); moved=true;
   }
@@ -564,13 +562,12 @@ window.addEventListener('pointercancel', endPtr);
 function doAction(a){
   if(!selected) return;
   const step=Math.max(8, stage.getBoundingClientRect().width*0.03);
-  const mf=mirror?-1:1;
   if(a==='bigger') selected.dataset.scale=clamp(+selected.dataset.scale*1.08,.2,6);
   else if(a==='smaller') selected.dataset.scale=clamp(+selected.dataset.scale/1.08,.2,6);
   else if(a==='rotL') selected.dataset.rot=+selected.dataset.rot-6;
   else if(a==='rotR') selected.dataset.rot=+selected.dataset.rot+6;
-  else if(a==='left')  selected.dataset.cx=+selected.dataset.cx-step*mf;
-  else if(a==='right') selected.dataset.cx=+selected.dataset.cx+step*mf;
+  else if(a==='left')  selected.dataset.cx=+selected.dataset.cx-step;
+  else if(a==='right') selected.dataset.cx=+selected.dataset.cx+step;
   else if(a==='up')    selected.dataset.cy=+selected.dataset.cy-step;
   else if(a==='down')  selected.dataset.cy=+selected.dataset.cy+step;
   else if(a==='front'){ layer.appendChild(selected); return; }
@@ -631,10 +628,9 @@ shutter.addEventListener('click', async ()=>{
   const W = Math.round(rect.width*dpr), H = Math.round(rect.height*dpr);
   canvas.width = W; canvas.height = H;
 
+  // background: video or photo (mirrored if mirror on)
   ctx.save();
   if(mirror){ ctx.translate(W,0); ctx.scale(-1,1); }
-
-  // background: video or photo
   if(mode==="camera" && video.videoWidth){
     drawCover(video, video.videoWidth, video.videoHeight, W, H);
   } else if(mode==="photo" && photo.naturalWidth){
@@ -642,6 +638,7 @@ shutter.addEventListener('click', async ()=>{
   } else {
     ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
   }
+  ctx.restore(); // stickers below are drawn straight (never mirrored)
 
   // stickers
   const els = [...layer.querySelectorAll('.sticker')];
@@ -657,8 +654,6 @@ shutter.addEventListener('click', async ()=>{
     ctx.drawImage(img, -w/2, -h/2, w, h);
     ctx.restore();
   }
-  ctx.restore(); // undo mirror before frame (frame drawn straight so text stays right)
-
   // frame (drawn without mirror so labels read correctly)
   if(activeFrame){
     const fimg = await loadImg(activeFrame.src);
