@@ -83,6 +83,12 @@
   .sticker-ctrl button[data-a="del"]{background:#b23a5b;}
   .frame-overlay img{width:100%;height:100%;object-fit:fill;}
 
+  /* ---- 괴도키드 변신 AR 오버레이 ---- */
+  .ar-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;z-index:5;}
+  .stage.ar-on .ar-overlay{display:block;}
+  .stage.mirror .ar-overlay{transform:scaleX(-1);}
+  .icon-btn.loading{opacity:.6;pointer-events:none;}
+
   /* placeholder / permission state */
   .stage-msg{
     position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -193,6 +199,7 @@
     </div>
     <div class="top-btns">
       <button class="icon-btn" id="layoutBtn" title="구도 저장/불러오기">📁</button>
+      <button class="icon-btn" id="kidBtn" title="괴도키드 변신">🎩</button>
       <button class="icon-btn" id="mirrorBtn" title="좌우반전">🪞</button>
       <button class="icon-btn" id="flipBtn" title="카메라 전환">🔄</button>
     </div>
@@ -204,6 +211,7 @@
       <img id="photo" alt="">
       <div id="layer"></div>
       <div class="frame-overlay" id="frameLayer"></div>
+      <canvas class="ar-overlay" id="arOverlay"></canvas>
       <div class="flash" id="flash"></div>
       <div class="hint" id="hint">한 손가락으로 이동 · 두 손가락으로 크기·회전 · 아래 버튼으로도 조절</div>
       <div class="stage-msg" id="stageMsg">
@@ -574,6 +582,7 @@ shutter.addEventListener('click', async ()=>{
   } else {
     ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
   }
+  KID.captureDraw(ctx, W, H); // 괴도키드 AR 모자 (배경과 같은 미러 블록 안에서)
   ctx.restore(); // stickers below are drawn straight (never mirrored)
 
   // stickers
@@ -705,6 +714,195 @@ if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
   showMsg("이 브라우저에서는 카메라를 쓸 수 없어요. 사진을 올려서 써보세요.", false);
 }
 window.addEventListener('beforeunload', stopStream);
+/* ============================================================
+   괴도키드 변신 (AR 얼굴 트래킹 + 실크햇/모노클 오버레이)
+   - 추가 전용 블록. 기존 동작은 OFF 일 때 전혀 바뀌지 않음.
+   - MediaPipe Tasks Vision FaceLandmarker (CDN ESM, lazy-load).
+   ============================================================ */
+const KID = (()=>{
+  const MP_VER = "0.10.35";
+  const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
+  const WASM_URL = `${MP_BASE}/wasm`;
+  const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+  const HAT_SRC = "stickers/kaito-hat.png";
+
+  // 모자 이미지 안에서 "이마에 얹히는 챙 중앙" 앵커 (0~1, 이미지 좌표 기준).
+  // kaito-hat.png(616x772): 챙이 얼굴에 닿는 지점 ≈ 세로 0.60, 가로 0.50.
+  const HAT_ANCHOR_X = 0.50;
+  const HAT_ANCHOR_Y = 0.60;
+  // 모자 폭 = 눈사이거리 * 배수. 실크햇 챙이 얼굴보다 넓으므로 크게.
+  const HAT_WIDTH_MULT = 5.2;
+  // 앵커를 눈 라인 위로 얼마나 올릴지 (눈사이거리 대비). 이마 위.
+  const HAT_LIFT_MULT = 1.15;
+
+  const arOverlay = document.getElementById('arOverlay');
+  const arCtx = arOverlay.getContext('2d');
+  const kidBtn = document.getElementById('kidBtn');
+
+  let on = false;
+  let landmarker = null;
+  let loading = false;
+  let loadFailed = false;
+  let hatImg = null;
+  let rafId = null;
+  let lastVideoTime = -1;
+  let lastFace = null;   // 최근 감지된 얼굴 (없으면 null). 캡처에서 재사용.
+
+  function loadHat(){
+    if(hatImg) return Promise.resolve(hatImg);
+    return new Promise((res)=>{
+      const i = new Image();
+      i.onload = ()=>{ hatImg = i; res(i); };
+      i.onerror = ()=>{ res(null); };
+      i.src = HAT_SRC;
+    });
+  }
+
+  async function ensureModel(){
+    if(landmarker || loadFailed) return landmarker;
+    if(loading) return null;
+    loading = true;
+    kidBtn.classList.add('loading');
+    try{
+      const vision = await import(`${MP_BASE}/vision_bundle.mjs`);
+      const { FaceLandmarker, FilesetResolver } = vision;
+      const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
+      landmarker = await FaceLandmarker.createFromOptions(fileset, {
+        baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
+        runningMode: "VIDEO",
+        numFaces: 1,
+      });
+    }catch(err){
+      loadFailed = true;
+      console.warn('[괴도키드] 모델 로드 실패 — AR 없이 계속 진행', err);
+    }finally{
+      loading = false;
+      kidBtn.classList.remove('loading');
+    }
+    return landmarker;
+  }
+
+  // 비디오 프레임(0~1 정규화) → 스테이지 cover 공간(px) 매핑.
+  // object-fit:cover 와 동일 계산. (미러는 CSS 가 처리하므로 여기선 무시)
+  function coverMap(cw, ch){
+    const vw = video.videoWidth || 1, vh = video.videoHeight || 1;
+    const sr = vw/vh, dr = cw/ch;
+    let scale, offX, offY;
+    if(sr > dr){ // 소스가 더 넓음 → 높이 맞추고 가로 크롭
+      scale = ch / vh;
+      offX = (cw - vw*scale) / 2; offY = 0;
+    } else {     // 소스가 더 높음 → 폭 맞추고 세로 크롭
+      scale = cw / vw;
+      offX = 0; offY = (ch - vh*scale) / 2;
+    }
+    return { scale, offX, offY, vw, vh };
+  }
+
+  // landmarks(정규화) 로부터 모자 배치 파라미터 계산 (미러 없는 원본 공간).
+  function computePlacement(lm, cw, ch){
+    const m = coverMap(cw, ch);
+    const toPx = (p)=>({ x: m.offX + p.x*m.vw*m.scale, y: m.offY + p.y*m.vh*m.scale });
+    // FaceLandmarker 468 랜드마크: 33=오른눈 바깥, 263=왼눈 바깥, 10=이마 위, 168=미간
+    const eyeR = toPx(lm[33]);
+    const eyeL = toPx(lm[263]);
+    const brow = toPx(lm[10]);      // 이마 최상단 근처
+    const cx = (eyeR.x + eyeL.x) / 2;
+    const cy = (eyeR.y + eyeL.y) / 2;
+    const interI = Math.hypot(eyeL.x - eyeR.x, eyeL.y - eyeR.y) || 1;
+    const roll = Math.atan2(eyeL.y - eyeR.y, eyeL.x - eyeR.x); // rad
+    // 앵커 지점 = 눈 중앙에서 이마쪽(위)으로 interI*lift 만큼, roll 방향에 수직으로 이동.
+    const up = { x: Math.sin(roll), y: -Math.cos(roll) }; // roll 회전된 "위" 벡터
+    const lift = interI * HAT_LIFT_MULT;
+    const ax = cx + up.x*lift;
+    const ay = cy + up.y*lift;
+    const hatW = interI * HAT_WIDTH_MULT;
+    return { ax, ay, roll, hatW };
+  }
+
+  // 대상 캔버스 ctx 에 모자를 그린다. 미러는 호출측(또는 CSS)이 담당.
+  function drawHat(targetCtx, cw, ch, lm){
+    if(!hatImg || !lm) return;
+    const { ax, ay, roll, hatW } = computePlacement(lm, cw, ch);
+    const ar = hatImg.naturalHeight / hatImg.naturalWidth;
+    const hatH = hatW * ar;
+    targetCtx.save();
+    targetCtx.translate(ax, ay);
+    targetCtx.rotate(roll);
+    // 앵커(HAT_ANCHOR)가 (ax,ay)에 오도록 이미지 원점 보정.
+    targetCtx.drawImage(hatImg, -hatW*HAT_ANCHOR_X, -hatH*HAT_ANCHOR_Y, hatW, hatH);
+    targetCtx.restore();
+  }
+
+  function sizeOverlay(){
+    const r = stage.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio||1, 3);
+    const w = Math.round(r.width*dpr), h = Math.round(r.height*dpr);
+    if(arOverlay.width !== w || arOverlay.height !== h){
+      arOverlay.width = w; arOverlay.height = h;
+    }
+    return { w, h };
+  }
+
+  async function loop(){
+    if(!on){ return; }
+    rafId = requestAnimationFrame(loop);
+    if(!landmarker) return;
+    if(mode !== "camera" || !video.videoWidth){ lastFace = null; clearOverlay(); return; }
+    // 같은 프레임 중복 추론 방지
+    if(video.currentTime === lastVideoTime) return;
+    lastVideoTime = video.currentTime;
+    let res = null;
+    try{ res = landmarker.detectForVideo(video, performance.now()); }
+    catch(e){ return; }
+    const { w, h } = sizeOverlay();
+    arCtx.clearRect(0,0,w,h);
+    if(res && res.faceLandmarks && res.faceLandmarks.length){
+      lastFace = res.faceLandmarks[0];
+      drawHat(arCtx, w, h, lastFace);
+    } else {
+      lastFace = null;
+    }
+  }
+  function clearOverlay(){ arCtx.clearRect(0,0,arOverlay.width,arOverlay.height); }
+
+  async function enable(){
+    on = true;
+    stage.classList.add('ar-on');
+    kidBtn.classList.add('on');
+    await loadHat();
+    await ensureModel();
+    if(loadFailed){
+      // 모델 로드 실패 → 조용히 원복 (기존 동작 유지)
+      on = false;
+      stage.classList.remove('ar-on');
+      kidBtn.classList.remove('on');
+      toast('AR 모델을 불러오지 못했어요');
+      return;
+    }
+    lastVideoTime = -1;
+    if(!rafId) loop();
+  }
+  function disable(){
+    on = false;
+    stage.classList.remove('ar-on');
+    kidBtn.classList.remove('on');
+    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
+    lastFace = null;
+    clearOverlay();
+  }
+
+  kidBtn.addEventListener('click', ()=>{ on ? disable() : enable(); });
+
+  // 캡처 파이프라인에서 호출: 현재 얼굴에 모자를 대상 ctx(미러 블록 안)에 그린다.
+  // targetCtx 는 배경 비디오와 동일한 미러 변환이 적용된 상태여야 한다.
+  function captureDraw(targetCtx, W, H){
+    if(!on || !hatImg || !lastFace) return;
+    drawHat(targetCtx, W, H, lastFace);
+  }
+
+  return { get on(){ return on; }, captureDraw };
+})();
+
 </script>
 </body>
 </html>
