@@ -326,14 +326,14 @@ const svg = (inner, vb="0 0 400 400") =>
 const OVERLAYS = [
   { id:"none", name:"없음", type:"none" },
   { id:"bg_remove", name:"배경", type:"bg", emoji:"🎨" },
-  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, src:"stickers/kaito-kid-poke6.png" },
-  { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.55, scale:1.25}, src:"stickers/kaito-kid-kiss.png" },
-  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.4, scale:1.2}, src:"stickers/kaito-kid-hand4.png" },
-  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.4, scale:1.25}, src:"stickers/kaito-kid-half5.png" },
-  { id:"amuro_punch", name:"아무로 주먹👊", type:"sticker", w:240, filter:true, preset:{fx:0.34, scale:1.3}, src:"stickers/amuro-punch2.png" },
+  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, preset:{fx:0.44, scale:1.5}, src:"stickers/kaito-kid-poke6.png" },
+  { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.58, scale:1.45}, src:"stickers/kaito-kid-kiss.png" },
+  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.45}, src:"stickers/kaito-kid-hand4.png" },
+  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.45}, src:"stickers/kaito-kid-half5.png" },
+  { id:"amuro_punch", name:"아무로 주먹👊", type:"sticker", w:240, filter:true, preset:{fx:0.36, scale:1.5}, src:"stickers/amuro-punch2.png" },
   { id:"conan_kid_v", name:"코난&키드✌️", type:"group", src:"stickers/kaito-conan-v.png",
-    items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.27, scale:1.05},
-            {src:"stickers/kaito-conan-v.png", w:240, fx:0.73, scale:1.0} ] },
+    items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.26, scale:1.2},
+            {src:"stickers/kaito-conan-v.png", w:240, fx:0.74, scale:1.15} ] },
   { id:"kaito_ar", name:"모자변신🎩", type:"ar", arItem:"hat", src:"stickers/kaito-hat2.png" },
   { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses4.png" },
   { id:"conan_bowtie", name:"나비넥타이🎀", type:"ar", arItem:"bowtie", src:"stickers/conan-bowtie3.png" },
@@ -375,6 +375,14 @@ async function startCamera(){
     stream = await navigator.mediaDevices.getUserMedia({
       video:{ facingMode: facing, width:{ideal:1280}, height:{ideal:1707} }, audio:false
     });
+    // 전면 카메라 기본 확대 완화: 지원되면 줌을 최소(가장 넓은 화각)로.
+    try{
+      const track = stream.getVideoTracks()[0];
+      const caps = track && track.getCapabilities ? track.getCapabilities() : null;
+      if(caps && caps.zoom && typeof caps.zoom.min === 'number'){
+        await track.applyConstraints({ advanced:[{ zoom: caps.zoom.min }] });
+      }
+    }catch(_){}
     video.srcObject = stream;
     await video.play().catch(()=>{});
     mode = "camera";
