@@ -88,6 +88,7 @@
   .stage.ar-on .ar-overlay{display:block;}
   .stage.mirror .ar-overlay{transform:scaleX(-1);}
   .icon-btn.loading{opacity:.6;pointer-events:none;}
+  .chip.loading{opacity:.55;pointer-events:none;}
 
   /* placeholder / permission state */
   .stage-msg{
@@ -199,7 +200,6 @@
     </div>
     <div class="top-btns">
       <button class="icon-btn" id="layoutBtn" title="구도 저장/불러오기">📁</button>
-      <button class="icon-btn" id="kidBtn" title="괴도키드 변신">🎩</button>
       <button class="icon-btn" id="mirrorBtn" title="좌우반전">🪞</button>
       <button class="icon-btn" id="flipBtn" title="카메라 전환">🔄</button>
     </div>
@@ -285,6 +285,7 @@ const OVERLAYS = [
   { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, src:"stickers/kaito-kid-poke6.png" },
   { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.55, scale:1.25}, src:"stickers/kaito-kid-kiss.png" },
   { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.4, scale:1.2}, src:"stickers/kaito-kid-hand.png" },
+  { id:"kaito_ar", name:"모자변신🎩", type:"ar", src:"stickers/kaito-hat-only.png" },
 ];
 
 /* ============ 상태 ============ */
@@ -384,6 +385,12 @@ function onPick(o, chip){
     frameLayer.innerHTML = `<img src="${o.src}" alt="">`;
     setActiveChip(chip);
     updateClear();
+    return;
+  }
+  if(o.type==="ar"){
+    // 얼굴 트래킹 모자/모노클 토글 (필터처럼 트레이에서 켜고 끔)
+    chip.classList.add('loading');
+    KID.toggle().then(()=>{ chip.classList.remove('loading'); chip.classList.toggle('active', KID.on); });
     return;
   }
   // 고정 필터: 한 번에 하나만. 탭하면 이전 필터는 사라지고 교체, 같은 걸 다시 탭하면 꺼짐. (각자 위치·크기 기억)
@@ -749,183 +756,125 @@ const KID = (()=>{
   const MP_BASE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`;
   const WASM_URL = `${MP_BASE}/wasm`;
   const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
-  const HAT_SRC = "stickers/kaito-hat.png";
+  const HAT_SRC = "stickers/kaito-hat-only.png";       // 모자만 (모노클 없음)
+  const MONOCLE_SRC = "stickers/kaito-monocle.png";    // 모노클 따로 → 눈에 트래킹
 
-  // 모자 이미지 안에서 "이마에 얹히는 챙 중앙" 앵커 (0~1, 이미지 좌표 기준).
-  // kaito-hat.png(616x772): 챙이 얼굴에 닿는 지점 ≈ 세로 0.60, 가로 0.50.
+  // ── 튜너블 (배치 미세조정) ──
+  // 모자: 폭=눈사이거리*배수, lift=눈라인 위로 올림, 앵커=이미지 내 '머리에 얹히는' 지점
+  const HAT_WIDTH_MULT = 2.9;
+  const HAT_LIFT_MULT  = 0.75;
   const HAT_ANCHOR_X = 0.50;
-  const HAT_ANCHOR_Y = 0.60;
-  // 모자 폭 = 눈사이거리 * 배수. 실크햇 챙이 얼굴보다 넓으므로 크게.
-  const HAT_WIDTH_MULT = 3.4;
-  // 앵커를 눈 라인 위로 얼마나 올릴지 (눈사이거리 대비). 이마 위.
-  const HAT_LIFT_MULT = 1.15;
+  const HAT_ANCHOR_Y = 0.74;   // 챙 근처(하단). 이 점이 이마에 닿음
+  // 모노클: 폭=한쪽 눈폭*배수, 앵커=이미지 내 렌즈 중심
+  const MON_WIDTH_MULT = 2.0;
+  const MON_ANCHOR_X = 0.42;
+  const MON_ANCHOR_Y = 0.30;
 
   const arOverlay = document.getElementById('arOverlay');
   const arCtx = arOverlay.getContext('2d');
-  const kidBtn = document.getElementById('kidBtn');
+  const kidBtn = document.getElementById('kidBtn');  // 헤더 버튼 제거됨 → null 가능 (트레이 칩으로 토글)
 
-  let on = false;
-  let landmarker = null;
-  let loading = false;
-  let loadFailed = false;
-  let hatImg = null;
-  let rafId = null;
-  let lastVideoTime = -1;
-  let lastFace = null;   // 최근 감지된 얼굴 (없으면 null). 캡처에서 재사용.
+  let on=false, landmarker=null, loading=false, loadFailed=false;
+  let hatImg=null, monocleImg=null, rafId=null, lastVideoTime=-1, lastFace=null;
 
-  function loadHat(){
-    if(hatImg) return Promise.resolve(hatImg);
-    return new Promise((res)=>{
-      const i = new Image();
-      i.onload = ()=>{ hatImg = i; res(i); };
-      i.onerror = ()=>{ res(null); };
-      i.src = HAT_SRC;
-    });
-  }
+  function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
+  async function loadAssets(){ if(!hatImg) hatImg=await loadImg(HAT_SRC); if(!monocleImg) monocleImg=await loadImg(MONOCLE_SRC); }
 
   async function ensureModel(){
     if(landmarker || loadFailed) return landmarker;
     if(loading) return null;
-    loading = true;
-    kidBtn.classList.add('loading');
+    loading=true; kidBtn && kidBtn.classList.add('loading');
     try{
       const vision = await import(`${MP_BASE}/vision_bundle.mjs`);
       const { FaceLandmarker, FilesetResolver } = vision;
       const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
       landmarker = await FaceLandmarker.createFromOptions(fileset, {
         baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-        runningMode: "VIDEO",
-        numFaces: 1,
+        runningMode: "VIDEO", numFaces: 1,
       });
-    }catch(err){
-      loadFailed = true;
-      console.warn('[괴도키드] 모델 로드 실패 — AR 없이 계속 진행', err);
-    }finally{
-      loading = false;
-      kidBtn.classList.remove('loading');
-    }
+    }catch(err){ loadFailed=true; console.warn('[괴도키드] 모델 로드 실패 — AR 없이 계속', err); }
+    finally{ loading=false; kidBtn && kidBtn.classList.remove('loading'); }
     return landmarker;
   }
 
-  // 비디오 프레임(0~1 정규화) → 스테이지 cover 공간(px) 매핑.
-  // object-fit:cover 와 동일 계산. (미러는 CSS 가 처리하므로 여기선 무시)
+  // 비디오 프레임(0~1) → 스테이지 cover 공간(px). object-fit:cover 동일 계산. (미러는 CSS/호출측 담당)
   function coverMap(cw, ch){
-    const vw = video.videoWidth || 1, vh = video.videoHeight || 1;
-    const sr = vw/vh, dr = cw/ch;
-    let scale, offX, offY;
-    if(sr > dr){ // 소스가 더 넓음 → 높이 맞추고 가로 크롭
-      scale = ch / vh;
-      offX = (cw - vw*scale) / 2; offY = 0;
-    } else {     // 소스가 더 높음 → 폭 맞추고 세로 크롭
-      scale = cw / vw;
-      offX = 0; offY = (ch - vh*scale) / 2;
-    }
-    return { scale, offX, offY, vw, vh };
+    const vw=video.videoWidth||1, vh=video.videoHeight||1;
+    const sr=vw/vh, dr=cw/ch; let scale,offX,offY;
+    if(sr>dr){ scale=ch/vh; offX=(cw-vw*scale)/2; offY=0; }
+    else { scale=cw/vw; offX=0; offY=(ch-vh*scale)/2; }
+    return {scale,offX,offY,vw,vh};
   }
-
-  // landmarks(정규화) 로부터 모자 배치 파라미터 계산 (미러 없는 원본 공간).
-  function computePlacement(lm, cw, ch){
-    const m = coverMap(cw, ch);
-    const toPx = (p)=>({ x: m.offX + p.x*m.vw*m.scale, y: m.offY + p.y*m.vh*m.scale });
-    // FaceLandmarker 468 랜드마크: 33=오른눈 바깥, 263=왼눈 바깥, 10=이마 위, 168=미간
-    const eyeR = toPx(lm[33]);
-    const eyeL = toPx(lm[263]);
-    const brow = toPx(lm[10]);      // 이마 최상단 근처
-    const cx = (eyeR.x + eyeL.x) / 2;
-    const cy = (eyeR.y + eyeL.y) / 2;
-    const interI = Math.hypot(eyeL.x - eyeR.x, eyeL.y - eyeR.y) || 1;
-    const roll = Math.atan2(eyeL.y - eyeR.y, eyeL.x - eyeR.x); // rad
-    // 앵커 지점 = 눈 중앙에서 이마쪽(위)으로 interI*lift 만큼, roll 방향에 수직으로 이동.
-    const up = { x: Math.sin(roll), y: -Math.cos(roll) }; // roll 회전된 "위" 벡터
-    const lift = interI * HAT_LIFT_MULT;
-    const ax = cx + up.x*lift;
-    const ay = cy + up.y*lift;
-    const hatW = interI * HAT_WIDTH_MULT;
-    return { ax, ay, roll, hatW };
+  // 얼굴 프레임: 두 눈 중앙/눈사이거리/기울기 + 한쪽(오른) 눈 중심·폭
+  function faceFrame(lm, cw, ch){
+    const m=coverMap(cw,ch);
+    const toPx=p=>({x:m.offX+p.x*m.vw*m.scale, y:m.offY+p.y*m.vh*m.scale});
+    const eR=toPx(lm[33]), eL=toPx(lm[263]);       // 33=오른눈 바깥, 263=왼눈 바깥
+    const cx=(eR.x+eL.x)/2, cy=(eR.y+eL.y)/2;
+    const interI=Math.hypot(eL.x-eR.x, eL.y-eR.y)||1;
+    const roll=Math.atan2(eL.y-eR.y, eL.x-eR.x);
+    const rIn=toPx(lm[133]);                        // 133=오른눈 안쪽
+    const reCx=(eR.x+rIn.x)/2, reCy=(eR.y+rIn.y)/2;
+    const eyeW=Math.hypot(rIn.x-eR.x, rIn.y-eR.y)||1;
+    return {cx,cy,interI,roll,reCx,reCy,eyeW};
   }
-
-  // 대상 캔버스 ctx 에 모자를 그린다. 미러는 호출측(또는 CSS)이 담당.
-  function drawHat(targetCtx, cw, ch, lm){
+  function drawHat(ctx, cw, ch, lm){
     if(!hatImg || !lm) return;
-    const { ax, ay, roll, hatW } = computePlacement(lm, cw, ch);
-    const ar = hatImg.naturalHeight / hatImg.naturalWidth;
-    const hatH = hatW * ar;
-    targetCtx.save();
-    targetCtx.translate(ax, ay);
-    targetCtx.rotate(roll);
-    // 앵커(HAT_ANCHOR)가 (ax,ay)에 오도록 이미지 원점 보정.
-    targetCtx.drawImage(hatImg, -hatW*HAT_ANCHOR_X, -hatH*HAT_ANCHOR_Y, hatW, hatH);
-    targetCtx.restore();
+    const f=faceFrame(lm,cw,ch);
+    const up={x:Math.sin(f.roll), y:-Math.cos(f.roll)};
+    const lift=f.interI*HAT_LIFT_MULT;
+    const ax=f.cx+up.x*lift, ay=f.cy+up.y*lift;
+    const w=f.interI*HAT_WIDTH_MULT, h=w*(hatImg.naturalHeight/hatImg.naturalWidth);
+    ctx.save(); ctx.translate(ax,ay); ctx.rotate(f.roll);
+    ctx.drawImage(hatImg, -w*HAT_ANCHOR_X, -h*HAT_ANCHOR_Y, w, h); ctx.restore();
   }
+  function drawMonocle(ctx, cw, ch, lm){
+    if(!monocleImg || !lm) return;
+    const f=faceFrame(lm,cw,ch);
+    const w=f.eyeW*MON_WIDTH_MULT, h=w*(monocleImg.naturalHeight/monocleImg.naturalWidth);
+    ctx.save(); ctx.translate(f.reCx,f.reCy); ctx.rotate(f.roll);
+    ctx.drawImage(monocleImg, -w*MON_ANCHOR_X, -h*MON_ANCHOR_Y, w, h); ctx.restore();
+  }
+  function drawAll(ctx, cw, ch, lm){ drawHat(ctx,cw,ch,lm); drawMonocle(ctx,cw,ch,lm); }
 
   function sizeOverlay(){
-    const r = stage.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio||1, 3);
-    const w = Math.round(r.width*dpr), h = Math.round(r.height*dpr);
-    if(arOverlay.width !== w || arOverlay.height !== h){
-      arOverlay.width = w; arOverlay.height = h;
-    }
-    return { w, h };
-  }
-
-  async function loop(){
-    if(!on){ return; }
-    rafId = requestAnimationFrame(loop);
-    if(!landmarker) return;
-    if(mode !== "camera" || !video.videoWidth){ lastFace = null; clearOverlay(); return; }
-    // 같은 프레임 중복 추론 방지
-    if(video.currentTime === lastVideoTime) return;
-    lastVideoTime = video.currentTime;
-    let res = null;
-    try{ res = landmarker.detectForVideo(video, performance.now()); }
-    catch(e){ return; }
-    const { w, h } = sizeOverlay();
-    arCtx.clearRect(0,0,w,h);
-    if(res && res.faceLandmarks && res.faceLandmarks.length){
-      lastFace = res.faceLandmarks[0];
-      drawHat(arCtx, w, h, lastFace);
-    } else {
-      lastFace = null;
-    }
+    const r=stage.getBoundingClientRect(); const dpr=Math.min(window.devicePixelRatio||1,3);
+    const w=Math.round(r.width*dpr), h=Math.round(r.height*dpr);
+    if(arOverlay.width!==w||arOverlay.height!==h){ arOverlay.width=w; arOverlay.height=h; }
+    return {w,h};
   }
   function clearOverlay(){ arCtx.clearRect(0,0,arOverlay.width,arOverlay.height); }
 
+  async function loop(){
+    if(!on) return;
+    rafId=requestAnimationFrame(loop);
+    if(!landmarker) return;
+    if(mode!=="camera"||!video.videoWidth){ lastFace=null; clearOverlay(); return; }
+    if(video.currentTime===lastVideoTime) return;
+    lastVideoTime=video.currentTime;
+    let res=null; try{ res=landmarker.detectForVideo(video, performance.now()); }catch(e){ return; }
+    const {w,h}=sizeOverlay(); arCtx.clearRect(0,0,w,h);
+    if(res && res.faceLandmarks && res.faceLandmarks.length){ lastFace=res.faceLandmarks[0]; drawAll(arCtx,w,h,lastFace); }
+    else lastFace=null;
+  }
+
   async function enable(){
-    on = true;
-    stage.classList.add('ar-on');
-    kidBtn.classList.add('on');
-    await loadHat();
-    await ensureModel();
-    if(loadFailed){
-      // 모델 로드 실패 → 조용히 원복 (기존 동작 유지)
-      on = false;
-      stage.classList.remove('ar-on');
-      kidBtn.classList.remove('on');
-      toast('AR 모델을 불러오지 못했어요');
-      return;
-    }
-    lastVideoTime = -1;
-    if(!rafId) loop();
+    on=true; stage.classList.add('ar-on'); kidBtn && kidBtn.classList.add('on');
+    await loadAssets(); await ensureModel();
+    if(loadFailed){ on=false; stage.classList.remove('ar-on'); kidBtn && kidBtn.classList.remove('on'); toast('AR 모델을 불러오지 못했어요'); return; }
+    lastVideoTime=-1; if(!rafId) loop();
   }
   function disable(){
-    on = false;
-    stage.classList.remove('ar-on');
-    kidBtn.classList.remove('on');
-    if(rafId){ cancelAnimationFrame(rafId); rafId = null; }
-    lastFace = null;
-    clearOverlay();
+    on=false; stage.classList.remove('ar-on'); kidBtn && kidBtn.classList.remove('on');
+    if(rafId){ cancelAnimationFrame(rafId); rafId=null; } lastFace=null; clearOverlay();
   }
+  async function toggle(){ if(on) disable(); else await enable(); return on; }
+  kidBtn && kidBtn.addEventListener('click', ()=>toggle());
 
-  kidBtn.addEventListener('click', ()=>{ on ? disable() : enable(); });
+  // 캡처: 현재 얼굴에 모자+모노클을 대상 ctx(미러 블록 안)에 그린다.
+  function captureDraw(targetCtx, W, H){ if(!on || !lastFace) return; drawAll(targetCtx, W, H, lastFace); }
 
-  // 캡처 파이프라인에서 호출: 현재 얼굴에 모자를 대상 ctx(미러 블록 안)에 그린다.
-  // targetCtx 는 배경 비디오와 동일한 미러 변환이 적용된 상태여야 한다.
-  function captureDraw(targetCtx, W, H){
-    if(!on || !hatImg || !lastFace) return;
-    drawHat(targetCtx, W, H, lastFace);
-  }
-
-  return { get on(){ return on; }, captureDraw };
+  return { get on(){ return on; }, captureDraw, toggle };
 })();
 
 </script>
