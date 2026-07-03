@@ -785,7 +785,8 @@ const KID = (()=>{
 
   // ── 튜너블 (배치 미세조정) ──
   // 모자: 폭=눈사이거리*배수, lift=눈라인 위로 올림, 앵커=이미지 내 '머리에 얹히는' 지점
-  const HAT_WIDTH_MULT = 2.9;
+  const HAT_WIDTH_MULT = 3.2;   // 가로 살짝 넓게
+  const HAT_VSCALE     = 0.8;   // 세로 눌러서 덜 길게
   const HAT_LIFT_MULT  = 0.75;
   const HAT_ANCHOR_X = 0.50;
   const HAT_ANCHOR_Y = 0.74;   // 챙 근처(하단). 이 점이 이마에 닿음
@@ -848,7 +849,7 @@ const KID = (()=>{
     const up={x:Math.sin(f.roll), y:-Math.cos(f.roll)};
     const lift=f.interI*HAT_LIFT_MULT;
     const ax=f.cx+up.x*lift, ay=f.cy+up.y*lift;
-    const w=f.interI*HAT_WIDTH_MULT, h=w*(hatImg.naturalHeight/hatImg.naturalWidth);
+    const w=f.interI*HAT_WIDTH_MULT, h=w*(hatImg.naturalHeight/hatImg.naturalWidth)*HAT_VSCALE;
     ctx.save(); ctx.translate(ax,ay); ctx.rotate(f.roll);
     ctx.drawImage(hatImg, -w*HAT_ANCHOR_X, -h*HAT_ANCHOR_Y, w, h); ctx.restore();
   }
@@ -859,7 +860,7 @@ const KID = (()=>{
     ctx.save(); ctx.translate(f.reCx,f.reCy); ctx.rotate(f.roll);
     ctx.drawImage(monocleImg, -w*MON_ANCHOR_X, -h*MON_ANCHOR_Y, w, h); ctx.restore();
   }
-  function drawAll(ctx, cw, ch, lm){ drawHat(ctx,cw,ch,lm); drawMonocle(ctx,cw,ch,lm); }
+  function drawAll(ctx, cw, ch, lm){ drawHat(ctx,cw,ch,lm); }  // 모노클 제거 (모자만)
 
   function sizeOverlay(){
     const r=stage.getBoundingClientRect(); const dpr=Math.min(window.devicePixelRatio||1,3);
