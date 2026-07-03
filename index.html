@@ -252,13 +252,6 @@
     </div>
     <div class="sticker-ctrl" id="sctrl">
       <div class="sc-row">
-        <button data-a="left" title="왼쪽">◀</button>
-        <button data-a="up" title="위">▲</button>
-        <button data-a="down" title="아래">▼</button>
-        <button data-a="right" title="오른쪽">▶</button>
-        <button data-a="front" title="맨 앞으로">⧉</button>
-      </div>
-      <div class="sc-row">
         <button data-a="smaller" title="작게">➖</button>
         <button data-a="bigger" title="크게">➕</button>
         <button data-a="rotL" title="회전">↺</button>
@@ -344,6 +337,7 @@ const OVERLAYS = [
   { id:"kaito_ar", name:"모자변신🎩", type:"ar", arItem:"hat", src:"stickers/kaito-hat2.png" },
   { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses4.png" },
   { id:"conan_bowtie", name:"나비넥타이🎀", type:"ar", arItem:"bowtie", src:"stickers/conan-bowtie3.png" },
+  { id:"pika_mask", name:"피카츄탈⚡", type:"ar", arItem:"pika", src:"stickers/pika-mask.png" },
 ];
 
 /* ============ 상태 ============ */
@@ -545,8 +539,8 @@ function applyTransform(el){
 function select(el){
   if(selected) selected.classList.remove('selected');
   selected = el;
-  // 조절 버튼바 안 띄움 — 캐릭터를 직접 잡아 드래그(이동)/핀치(크기·회전)로만 조정. 안 잡으면 설정 그대로 고정.
-  sctrl.classList.remove('show');
+  // 캐릭터를 잡으면(선택) 작은 크기·회전 바를 띄운다. 안 잡으면 숨김(설정 그대로 고정).
+  if(el) sctrl.classList.add('show'); else sctrl.classList.remove('show');
 }
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const angle=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
@@ -943,6 +937,12 @@ const KID = (()=>{
   // 나비넥타이: 폭=눈사이거리*배수, drop=턱에서 아래로
   const BOW_WIDTH_MULT = 1.25;
   const BOW_DROP = 0.8;
+  const PIKA_SRC = "stickers/pika-mask.png";           // 피카츄 탈(가운데 얼굴 구멍) → 얼굴에 씌움
+  // 피카츄 탈: 폭=얼굴폭*배수, 앵커=이미지 내 구멍 중심(0.5, 0.607), CENTER=눈~턱 사이 배치 비율
+  const PIKA_WIDTH_MULT = 3.0;
+  const PIKA_ANCHOR_X = 0.50;
+  const PIKA_ANCHOR_Y = 0.607;
+  const PIKA_CENTER = 0.35;
 
   // ── 튜너블 (배치 미세조정) ──
   // 모자: 폭=눈사이거리*배수, lift=눈라인 위로 올림, 앵커=이미지 내 '머리에 얹히는' 지점
@@ -960,16 +960,17 @@ const KID = (()=>{
   const arCtx = arOverlay.getContext('2d');
   const kidBtn = document.getElementById('kidBtn');  // 헤더 버튼 제거됨 → null 가능 (트레이 칩으로 토글)
 
-  const items = { hat:false, glasses:false, bowtie:false };   // 얼굴 트래킹 아이템별 on/off
-  const anyOn = ()=> items.hat || items.glasses || items.bowtie;
+  const items = { hat:false, glasses:false, bowtie:false, pika:false };   // 얼굴 트래킹 아이템별 on/off
+  const anyOn = ()=> items.hat || items.glasses || items.bowtie || items.pika;
   let landmarker=null, loading=false, loadFailed=false;
-  let hatImg=null, glassesImg=null, bowtieImg=null, rafId=null, lastVideoTime=-1, lastFaces=[];
+  let hatImg=null, glassesImg=null, bowtieImg=null, pikaImg=null, rafId=null, lastVideoTime=-1, lastFaces=[];
 
   function loadImg(src){ return new Promise(res=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=()=>res(null); i.src=src; }); }
   async function ensureAsset(item){
     if(item==='hat' && !hatImg) hatImg=await loadImg(HAT_SRC);
     if(item==='glasses' && !glassesImg) glassesImg=await loadImg(GLASSES_SRC);
     if(item==='bowtie' && !bowtieImg) bowtieImg=await loadImg(BOWTIE_SRC);
+    if(item==='pika' && !pikaImg) pikaImg=await loadImg(PIKA_SRC);
   }
 
   async function ensureModel(){
@@ -1043,7 +1044,16 @@ const KID = (()=>{
     ctx.save(); ctx.translate(ax,ay); ctx.rotate(f.roll);
     ctx.drawImage(bowtieImg, -w*0.5, -h*0.5, w, h); ctx.restore();
   }
+  function drawPika(ctx, cw, ch, lm){
+    if(!pikaImg || !lm) return;
+    const f=faceFrame(lm,cw,ch);
+    const fx=f.cx+(f.chin.x-f.cx)*PIKA_CENTER, fy=f.cy+(f.chin.y-f.cy)*PIKA_CENTER;
+    const w=f.faceW*PIKA_WIDTH_MULT, h=w*(pikaImg.naturalHeight/pikaImg.naturalWidth);
+    ctx.save(); ctx.translate(fx,fy); ctx.rotate(f.roll);
+    ctx.drawImage(pikaImg, -w*PIKA_ANCHOR_X, -h*PIKA_ANCHOR_Y, w, h); ctx.restore();
+  }
   function drawAll(ctx, cw, ch, lm){
+    if(items.pika) drawPika(ctx,cw,ch,lm);      // 얼굴 탈(맨 아래, 구멍으로 얼굴 보임)
     if(items.bowtie) drawBowtie(ctx,cw,ch,lm);
     if(items.glasses) drawGlasses(ctx,cw,ch,lm);
     if(items.hat) drawHat(ctx,cw,ch,lm);          // 모자(맨 위)
