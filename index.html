@@ -89,6 +89,11 @@
   .stage.mirror .ar-overlay{transform:scaleX(-1);}
   .icon-btn.loading{opacity:.6;pointer-events:none;}
   .chip.loading{opacity:.55;pointer-events:none;}
+  .countdown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    font-family:"Jua",sans-serif;font-size:140px;color:#fff;text-shadow:0 4px 24px rgba(0,0,0,.6);z-index:8;pointer-events:none;}
+  .countdown.show{display:flex;}
+  .icon-btn.on{position:relative;}
+  .icon-btn .badge{position:absolute;bottom:-2px;right:-2px;background:var(--pink);color:#fff;font-size:9px;font-weight:800;border-radius:8px;padding:1px 4px;line-height:1.2;}
 
   /* placeholder / permission state */
   .stage-msg{
@@ -200,6 +205,7 @@
     </div>
     <div class="top-btns">
       <button class="icon-btn" id="layoutBtn" title="구도 저장/불러오기">📁</button>
+      <button class="icon-btn" id="timerBtn" title="타이머">⏱️</button>
       <button class="icon-btn" id="mirrorBtn" title="좌우반전">🪞</button>
       <button class="icon-btn" id="flipBtn" title="카메라 전환">🔄</button>
     </div>
@@ -213,6 +219,7 @@
       <div class="frame-overlay" id="frameLayer"></div>
       <canvas class="ar-overlay" id="arOverlay"></canvas>
       <div class="flash" id="flash"></div>
+      <div class="countdown" id="countdown"></div>
       <div class="hint" id="hint">한 손가락으로 이동 · 두 손가락으로 크기·회전 · 아래 버튼으로도 조절</div>
       <div class="stage-msg" id="stageMsg">
         <div class="big">📷</div>
@@ -479,8 +486,8 @@ function applyTransform(el){
 function select(el){
   if(selected) selected.classList.remove('selected');
   selected = el;
-  if(el){ el.classList.add('selected'); sctrl.classList.add('show'); }
-  else { sctrl.classList.remove('show'); }
+  // 조절 버튼바 안 띄움 — 캐릭터를 직접 잡아 드래그(이동)/핀치(크기·회전)로만 조정. 안 잡으면 설정 그대로 고정.
+  sctrl.classList.remove('show');
 }
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const angle=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
@@ -608,7 +615,29 @@ function drawCover(source, sw, sh, dw, dh){
 
 function loadImg(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; }); }
 
+/* ============ 셀프 타이머 ============ */
+let timerSec=0, counting=false;
+const timerBtn=document.getElementById('timerBtn');
+const countdownEl=document.getElementById('countdown');
+function updateTimerBtn(){
+  timerBtn.classList.toggle('on', timerSec>0);
+  const old=timerBtn.querySelector('.badge'); if(old) old.remove();
+  if(timerSec>0){ const b=document.createElement('span'); b.className='badge'; b.textContent=timerSec+'s'; timerBtn.appendChild(b); }
+}
+timerBtn.addEventListener('click', ()=>{
+  timerSec = timerSec===0?3 : timerSec===3?5 : timerSec===5?10 : 0;
+  updateTimerBtn(); toast(timerSec>0?`타이머 ${timerSec}초`:'타이머 끔');
+});
+function runCountdown(sec){
+  return new Promise(res=>{
+    let n=sec; countdownEl.textContent=n; countdownEl.classList.add('show');
+    const iv=setInterval(()=>{ n--; if(n<=0){ clearInterval(iv); countdownEl.classList.remove('show'); res(); } else countdownEl.textContent=n; }, 1000);
+  });
+}
+
 shutter.addEventListener('click', async ()=>{
+  if(counting) return;
+  if(timerSec>0){ counting=true; await runCountdown(timerSec); counting=false; }
   const rect = stage.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio||1, 3);
   const W = Math.round(rect.width*dpr), H = Math.round(rect.height*dpr);
