@@ -331,7 +331,7 @@ const OVERLAYS = [
     items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.27, scale:1.05},
             {src:"stickers/kaito-conan-v.png", w:240, fx:0.73, scale:1.0} ] },
   { id:"kaito_ar", name:"모자변신🎩", type:"ar", arItem:"hat", src:"stickers/kaito-hat-only.png" },
-  { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses.png" },
+  { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses2.png" },
 ];
 
 /* ============ 상태 ============ */
@@ -859,7 +859,7 @@ const KID = (()=>{
   const MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
   const HAT_SRC = "stickers/kaito-hat-only.png";       // 모자만 (모노클 없음)
   const MONOCLE_SRC = "stickers/kaito-monocle.png";    // 모노클 따로 → 눈에 트래킹
-  const GLASSES_SRC = "stickers/conan-glasses.png";    // 코난 안경 → 두 눈에 트래킹
+  const GLASSES_SRC = "stickers/conan-glasses2.png";   // 코난 안경(크고 동그란 렌즈) → 두 눈에 트래킹
   // 안경: 폭=눈 바깥 코너 사이거리*배수, 앵커=이미지 내 렌즈 중심(가운데)
   const GLASS_WIDTH_MULT = 1.4;
   const GLASS_ANCHOR_X = 0.50;
