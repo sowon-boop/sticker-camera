@@ -508,7 +508,12 @@ async function onPick(o, chip){
       addStickerEx(o, {cx:r.width*saved.fx, cy:r.height*saved.fy, scale:saved.scale, rot:saved.rot||0}, true);
     } else {
       const p=o.preset||{};
-      addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale:p.scale??1.25, rot:0}, true);
+      const scale = p.scale ?? 1.25;
+      // 기본 배치: 캐릭터 바깥쪽 가장자리를 프레임 끝에 딱 붙임 → 옆에 배경 빈 공간 안 생김.
+      const boxWFrac = (o.w||240)/REF_W * scale;   // 캐릭터 박스 폭(스테이지 대비)
+      const rightSide = (p.fx ?? 0.42) >= 0.5;
+      const fx = rightSide ? (1.02 - boxWFrac/2) : (boxWFrac/2 - 0.02);
+      addStickerEx(o, {cx:r.width*fx, cy:r.height*(p.fy??0.5), scale, rot:0}, true);
     }
     chip.classList.add('active');
     return;
