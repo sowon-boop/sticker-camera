@@ -860,8 +860,8 @@ function getLayout(){
     scale:+el.dataset.scale, rot:+el.dataset.rot }));
   return { frame: activeFrame?activeFrame.id:null, mirror, stickers };
 }
-const AUTOKEY='camframe_autosave_v1';
-const FPOSKEY='camframe_filterpos_v1';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
+const AUTOKEY='camframe_autosave_v2';   // v2: 크기를 화면 비율 기준으로 바꾸며 옛 픽셀 기반 저장값 폐기
+const FPOSKEY='camframe_filterpos_v2';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
 function loadFpos(){ try{ return JSON.parse(localStorage.getItem(FPOSKEY)||'{}'); }catch(e){ return {}; } }
 let fpos = loadFpos();
 let _autoT=null;
