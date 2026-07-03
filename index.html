@@ -368,17 +368,7 @@ let activeFrame = null;     // {id, src}
 let stickerCount = 0;
 
 /* ============ 카메라 ============ */
-// 스테이지 비율을 실제 카메라/사진 프레임에 맞춰 object-fit:cover 크롭(=확대)을 없앤다.
-function fitStageToVideo(){
-  if(mode==="camera" && video.videoWidth && video.videoHeight){
-    stage.style.aspectRatio = video.videoWidth + ' / ' + video.videoHeight;
-  } else if(mode==="photo" && photo.naturalWidth && photo.naturalHeight){
-    stage.style.aspectRatio = photo.naturalWidth + ' / ' + photo.naturalHeight;
-  }
-  if(typeof reflowStickers==='function') reflowStickers();
-}
-video.addEventListener('loadedmetadata', fitStageToVideo);
-
+// 프레임은 항상 3:4 고정 → 어느 기기서든 캐릭터 위치가 동일. (동적 비율 제거)
 async function startCamera(){
   showMsg("카메라를 준비하고 있어요…", false);
   stopStream();
@@ -406,7 +396,6 @@ async function startCamera(){
     mode = "camera";
     photo.style.display = "none";
     video.style.display = "block";
-    fitStageToVideo();   // 스테이지 비율을 실제 카메라 영상에 맞춰 크롭(확대) 제거
     hideMsg();
     enableCapture(true);
   }catch(err){
@@ -431,7 +420,7 @@ retryBtn.addEventListener('click', startCamera);
 uploadInput.addEventListener('change', e=>{
   const f = e.target.files && e.target.files[0]; if(!f) return;
   const url = URL.createObjectURL(f);
-  photo.onload = ()=>{ URL.revokeObjectURL(url); fitStageToVideo(); };
+  photo.onload = ()=>URL.revokeObjectURL(url);
   photo.src = url;
   stopStream();
   mode = "photo";
