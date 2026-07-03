@@ -222,6 +222,7 @@
     <div class="brand"></div>
     <div class="top-btns">
       <button class="icon-btn" id="layoutBtn" title="구도 저장/불러오기">📁</button>
+      <button class="icon-btn" id="cutBtn" title="인생네컷">🎞️</button>
       <button class="icon-btn" id="timerBtn" title="타이머">⏱️</button>
       <button class="icon-btn" id="mirrorBtn" title="좌우반전">🪞</button>
       <button class="icon-btn" id="flipBtn" title="카메라 전환">🔄</button>
@@ -280,6 +281,16 @@
     <span class="bgbar-lbl">사진</span>
     <button class="sw img" data-img="stickers/bg-office.jpg" title="탐정사무소" style="background-image:url(stickers/bg-office.jpg)"></button>
     <button class="sw img" data-img="stickers/bg-tropical.jpg" title="트로피컬 랜드" style="background-image:url(stickers/bg-tropical.jpg)"></button>
+  </div>
+
+  <div class="bgbar" id="cutbar">
+    <span class="bgbar-lbl">네컷 프레임</span>
+    <button class="sw" data-cut="#ffffff|#333333" style="background:#ffffff"></button>
+    <button class="sw" data-cut="#111111|#ffffff" style="background:#111111"></button>
+    <button class="sw" data-cut="#FF5D9E|#ffffff" style="background:#FF5D9E"></button>
+    <button class="sw" data-cut="#57E6C3|#04241d" style="background:#57E6C3"></button>
+    <button class="sw" data-cut="#FFD166|#5a3a00" style="background:#FFD166"></button>
+    <span class="bgbar-lbl" style="margin-left:6px">셔터 누르면 4장 연속 촬영</span>
   </div>
 
   <div class="tray" id="tray"></div>
@@ -663,8 +674,10 @@ function drawCover(source, sw, sh, dw, dh){ coverDraw(ctx, source, sw, sh, dw, d
 
 function loadImg(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; }); }
 
-/* ============ 셀프 타이머 ============ */
+/* ============ 셀프 타이머 / 네컷 ============ */
 let timerSec=0, counting=false;
+let cutMode=false;
+let cutStyle={ bg:'#ffffff', fg:'#333333' };
 const timerBtn=document.getElementById('timerBtn');
 const countdownEl=document.getElementById('countdown');
 function updateTimerBtn(){
@@ -683,57 +696,117 @@ function runCountdown(sec){
   });
 }
 
-shutter.addEventListener('click', async ()=>{
-  if(counting) return;
-  if(timerSec>0){ counting=true; await runCountdown(timerSec); counting=false; }
+function shotSize(){
   const rect = stage.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio||1, 3);
-  const W = Math.round(rect.width*dpr), H = Math.round(rect.height*dpr);
-  canvas.width = W; canvas.height = H;
+  return { W: Math.round(rect.width*dpr), H: Math.round(rect.height*dpr), dpr };
+}
+function doFlash(){ flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go'); }
 
-  // background: video or photo (mirrored if mirror on)
-  ctx.save();
-  if(mirror){ ctx.translate(W,0); ctx.scale(-1,1); }
+// 한 장(배경+AR+스티커+프레임)을 주어진 캔버스에 그린다. 단일컷/네컷 공용.
+async function drawShot(cnv, cx, W, H, dpr){
+  cnv.width = W; cnv.height = H;
+  cx.save();
+  if(mirror){ cx.translate(W,0); cx.scale(-1,1); }
   if(mode==="camera" && video.videoWidth){
-    if(BG.on && BG.ready){ BG.captureBase(ctx, W, H); }
-    else drawCover(video, video.videoWidth, video.videoHeight, W, H);
+    if(BG.on && BG.ready){ BG.captureBase(cx, W, H); }
+    else coverDraw(cx, video, video.videoWidth, video.videoHeight, W, H);
   } else if(mode==="photo" && photo.naturalWidth){
-    drawCover(photo, photo.naturalWidth, photo.naturalHeight, W, H);
-  } else {
-    ctx.fillStyle="#000"; ctx.fillRect(0,0,W,H);
-  }
-  KID.captureDraw(ctx, W, H); // 괴도키드 AR 모자 (배경과 같은 미러 블록 안에서)
-  ctx.restore(); // stickers below are drawn straight (never mirrored)
-
-  // stickers
-  const els = [...layer.querySelectorAll('.sticker')];
-  for(const el of els){
+    coverDraw(cx, photo, photo.naturalWidth, photo.naturalHeight, W, H);
+  } else { cx.fillStyle="#000"; cx.fillRect(0,0,W,H); }
+  KID.captureDraw(cx, W, H);
+  cx.restore();
+  // 스티커 (미러 안 함)
+  for(const el of [...layer.querySelectorAll('.sticker')]){
     const img = el.querySelector('img');
     const w = (+el.dataset.w)*(+el.dataset.scale)*dpr;
-    const iw = img.naturalWidth||1, ih = img.naturalHeight||1;
-    const h = w * (ih/iw);
-    const cx = (+el.dataset.cx)*dpr, cy = (+el.dataset.cy)*dpr;
+    const h = w * ((img.naturalHeight||1)/(img.naturalWidth||1));
+    const px = (+el.dataset.cx)*dpr, py = (+el.dataset.cy)*dpr;
     const rot = (+el.dataset.rot)*Math.PI/180;
-    ctx.save();
-    ctx.translate(cx, cy); ctx.rotate(rot);
-    ctx.drawImage(img, -w/2, -h/2, w, h);
-    ctx.restore();
+    cx.save(); cx.translate(px, py); cx.rotate(rot); cx.drawImage(img, -w/2, -h/2, w, h); cx.restore();
   }
-  // frame (drawn without mirror so labels read correctly)
-  if(activeFrame){
-    const fimg = await loadImg(activeFrame.src);
-    ctx.drawImage(fimg, 0, 0, W, H);
+  if(activeFrame){ const fimg = await loadImg(activeFrame.src); cx.drawImage(fimg, 0, 0, W, H); }
+}
+
+function showResult(blob){ lastBlob=blob; if(resultImg.src) URL.revokeObjectURL(resultImg.src); resultImg.src=URL.createObjectURL(blob); setTimeout(()=>result.classList.add('show'), 260); }
+
+// 네컷 합성: 캡처된 4장을 2x2 프레임 카드로.
+function composeFourCut(shots){
+  const tw = 520, th = Math.round(tw * (shots[0].height/shots[0].width));
+  const border = Math.round(tw*0.06), gap = Math.round(tw*0.05), footer = Math.round(tw*0.42);
+  const cols=2, rows=2;
+  const cardW = border*2 + cols*tw + (cols-1)*gap;
+  const cardH = border*2 + rows*th + (rows-1)*gap + footer;
+  const c = document.createElement('canvas'); c.width=cardW; c.height=cardH;
+  const x = c.getContext('2d');
+  x.fillStyle = cutStyle.bg; x.fillRect(0,0,cardW,cardH);
+  for(let i=0;i<4;i++){
+    const col=i%2, row=(i/2)|0;
+    const dx=border+col*(tw+gap), dy=border+row*(th+gap);
+    x.drawImage(shots[i], dx, dy, tw, th);
   }
+  const d=new Date();
+  const ds=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  x.fillStyle = cutStyle.fg; x.textAlign='center';
+  x.font = `700 ${Math.round(footer*0.34)}px "Jua", sans-serif`;
+  x.fillText('찰칵 네컷', cardW/2, cardH - border - footer*0.42);
+  x.font = `700 ${Math.round(footer*0.24)}px sans-serif`;
+  x.fillText(ds, cardW/2, cardH - border - footer*0.08);
+  return c;
+}
 
-  // flash effect
-  flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+async function shootFourCut(){
+  counting=true; enableCapture(false);
+  try{
+    const {W,H,dpr}=shotSize();
+    const shots=[];
+    for(let i=0;i<4;i++){
+      toast(`${i+1} / 4`);
+      await runCountdown(timerSec>0?timerSec:3);
+      const c=document.createElement('canvas');
+      await drawShot(c, c.getContext('2d'), W, H, dpr);
+      shots.push(c); doFlash();
+      await new Promise(r=>setTimeout(r, 700));
+    }
+    composeFourCut(shots).toBlob(showResult, 'image/png');
+  } finally { counting=false; enableCapture(mode==="camera"||mode==="photo"); }
+}
 
-  canvas.toBlob(blob=>{
-    lastBlob = blob;
-    resultImg.src = URL.createObjectURL(blob);
-    setTimeout(()=>result.classList.add('show'), 260);
-  }, 'image/png');
+async function shootSingle(){
+  counting=true;
+  try{
+    if(timerSec>0){ await runCountdown(timerSec); }
+    const {W,H,dpr}=shotSize();
+    await drawShot(canvas, ctx, W, H, dpr);
+    doFlash();
+    canvas.toBlob(showResult, 'image/png');
+  } finally { counting=false; }
+}
+
+shutter.addEventListener('click', ()=>{
+  if(counting) return;
+  if(cutMode) shootFourCut(); else shootSingle();
 });
+
+/* 인생네컷 모드 토글 + 프레임 색 */
+const cutBtn=document.getElementById('cutBtn');
+const cutbar=document.getElementById('cutbar');
+cutBtn.addEventListener('click', ()=>{
+  cutMode=!cutMode;
+  cutBtn.classList.toggle('on', cutMode);
+  cutbar.classList.toggle('show', cutMode);
+  shutter.querySelector('.inner').textContent = cutMode ? '네컷' : '찰칵';
+  toast(cutMode?'네컷 모드 — 셔터 누르면 4장':'네컷 모드 끔');
+});
+[...cutbar.querySelectorAll('.sw[data-cut]')].forEach(sw=>{
+  sw.addEventListener('click', ()=>{
+    const [bg,fg]=sw.dataset.cut.split('|');
+    cutStyle={bg,fg};
+    [...cutbar.querySelectorAll('.sw')].forEach(s=>s.classList.remove('on'));
+    sw.classList.add('on');
+  });
+});
+cutbar.querySelector('.sw[data-cut]').classList.add('on'); // 기본 흰색
 
 retakeBtn.addEventListener('click', ()=>{ result.classList.remove('show'); if(resultImg.src) URL.revokeObjectURL(resultImg.src); });
 
