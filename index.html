@@ -326,11 +326,11 @@ const svg = (inner, vb="0 0 400 400") =>
 const OVERLAYS = [
   { id:"none", name:"없음", type:"none" },
   { id:"bg_remove", name:"배경", type:"bg", emoji:"🎨" },
-  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, preset:{fx:0.44, scale:1.25}, src:"stickers/kaito-kid-poke6.png" },
-  { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.58, scale:1.25}, src:"stickers/kaito-kid-kiss.png" },
-  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.25}, src:"stickers/kaito-kid-hand4.png" },
-  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.25}, src:"stickers/kaito-kid-half5.png" },
-  { id:"amuro_punch", name:"아무로 주먹👊", type:"sticker", w:240, filter:true, preset:{fx:0.36, scale:1.25}, src:"stickers/amuro-punch2.png" },
+  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, preset:{fx:0.44, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-poke6.png" },
+  { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.58, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-kiss.png" },
+  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.42, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-hand4.png" },
+  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.42, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-half5.png" },
+  { id:"amuro_punch", name:"아무로 주먹👊", type:"sticker", w:240, filter:true, preset:{fx:0.36, fy:0.46, hfit:0.62}, src:"stickers/amuro-punch2.png" },
   { id:"conan_kid_v", name:"코난&키드✌️", type:"group", src:"stickers/kaito-conan-v.png",
     items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.26, scale:1.2},
             {src:"stickers/kaito-conan-v.png", w:240, fx:0.74, scale:1.15} ] },
@@ -508,11 +508,15 @@ async function onPick(o, chip){
       addStickerEx(o, {cx:r.width*saved.fx, cy:r.height*saved.fy, scale:saved.scale, rot:saved.rot||0}, true);
     } else {
       const p=o.preset||{};
-      const scale = p.scale ?? 1.25;
-      // 기본 배치: 캐릭터 바깥쪽 가장자리를 프레임 끝에 딱 붙임 → 옆에 배경 빈 공간 안 생김.
-      const boxWFrac = (o.w||240)/REF_W * scale;   // 캐릭터 박스 폭(스테이지 대비)
-      const rightSide = (p.fx ?? 0.42) >= 0.5;
-      const fx = rightSide ? (1.02 - boxWFrac/2) : (boxWFrac/2 - 0.02);
+      // 세로(높이) 기준 크기: 캐릭터가 프레임 높이의 hfit 비율이 되도록 → 전신이 프레임 안에 맞음(세로로 안 넘침).
+      const img=chip.querySelector('img');
+      const aspect=(img&&img.naturalWidth)? img.naturalWidth/img.naturalHeight : 0.5;   // 폭/높이
+      const hfit=p.hfit ?? 0.95;
+      const scale=clamp(hfit*(4/3)*aspect/0.6, .2, 6);   // 프레임 3:4 기준
+      const boxWFrac=(o.w||240)/REF_W*scale;
+      // 바깥쪽 가장자리에 딱 붙임 → 옆 배경 빈 공간 제거
+      const rightSide=(p.fx ?? 0.42) >= 0.5;
+      const fx=rightSide ? (1.02 - boxWFrac/2) : (boxWFrac/2 - 0.02);
       addStickerEx(o, {cx:r.width*fx, cy:r.height*(p.fy??0.5), scale, rot:0}, true);
     }
     chip.classList.add('active');
