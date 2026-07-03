@@ -158,6 +158,7 @@
   .bgbar .sw.on{border-color:var(--mint);box-shadow:0 0 0 3px rgba(87,230,195,.3);}
   .bgbar .sw.custom{display:grid;place-items:center;font-size:15px;background:var(--surface-2);overflow:hidden;}
   .bgbar .sw.custom input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .bgbar .sw.img{width:44px;border-radius:9px;background-size:cover;background-position:center;}
 
   /* ---- controls ---- */
   .controls{
@@ -276,6 +277,9 @@
     <button class="sw" data-c="#7EC8FF" style="background:#7EC8FF"></button>
     <button class="sw" data-c="#FFD166" style="background:#FFD166"></button>
     <label class="sw custom" title="색 직접 고르기">🎨<input type="color" id="bgColorInput" value="#ffffff"></label>
+    <span class="bgbar-lbl">사진</span>
+    <button class="sw img" data-img="stickers/bg-office.jpg" title="탐정사무소" style="background-image:url(stickers/bg-office.jpg)"></button>
+    <button class="sw img" data-img="stickers/bg-tropical.jpg" title="트로피컬 랜드" style="background-image:url(stickers/bg-tropical.jpg)"></button>
   </div>
 
   <div class="tray" id="tray"></div>
@@ -1011,6 +1015,7 @@ const BG = (()=>{
   const bgCtx = bgOverlay.getContext('2d');
   let on=false, segmenter=null, loading=false, loadFailed=false, rafId=null, lastVideoTime=-1;
   let color = '#ffffff';
+  let bgImg=null, bgImgSrc=null;   // 배경 이미지(사진) 사용 시. 있으면 색 대신 이미지 사용.
   let maskCanvas=null, maskCtx=null, off=null;
 
   // 투명 배경 미리보기용 체커보드 패턴
@@ -1053,12 +1058,23 @@ const BG = (()=>{
     if(bgOverlay.width!==w||bgOverlay.height!==h){ bgOverlay.width=w; bgOverlay.height=h; }
     return {w,h};
   }
+  // 배경 레이어 그리기. 이미지면 좌우반전을 상쇄해서 그림(오버레이/캡처가 mirror 로 다시 반전되므로 원본 방향 유지).
+  function drawBgLayer(ctx, w, h){
+    if(bgImg){
+      ctx.save();
+      if(mirror){ ctx.translate(w,0); ctx.scale(-1,1); }
+      coverDraw(ctx, bgImg, bgImg.naturalWidth||bgImg.width, bgImg.naturalHeight||bgImg.height, w, h);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = (color==='transparent') ? checker : color;
+      ctx.fillRect(0,0,w,h);
+    }
+  }
   function paintOverlay(w,h){
     bgCtx.setTransform(1,0,0,1,0,0);
     bgCtx.globalCompositeOperation='source-over';
     bgCtx.clearRect(0,0,w,h);
-    bgCtx.fillStyle = (color==='transparent') ? checker : color;
-    bgCtx.fillRect(0,0,w,h);
+    drawBgLayer(bgCtx, w, h);
     if(maskCanvas){
       bgCtx.globalCompositeOperation='destination-out';
       coverDraw(bgCtx, maskCanvas, maskCanvas.width, maskCanvas.height, w, h);
@@ -1094,11 +1110,24 @@ const BG = (()=>{
     bgCtx.setTransform(1,0,0,1,0,0); bgCtx.clearRect(0,0,bgOverlay.width,bgOverlay.height);
   }
   async function toggle(){ if(on) disable(); else await enable(); return on; }
-  function setColor(c){ color=c; repaint(); }
+  function setColor(c){ color=c; bgImg=null; bgImgSrc=null; repaint(); }
+  function setImage(src){
+    if(bgImgSrc===src && bgImg){ repaint(); return; }
+    bgImgSrc=src;
+    const img=new Image();
+    img.onload=()=>{ if(bgImgSrc===src){ bgImg=img; repaint(); } };
+    img.onerror=()=>{ if(bgImgSrc===src){ bgImg=null; toast('배경 이미지를 불러오지 못했어요'); } };
+    img.src=src;
+  }
 
-  // 캡처: 색을 채우고(투명이면 생략) 인물만 잘라 그 위에 합성. targetCtx 는 미러 블록 안.
+  // 캡처: 배경(색/투명/이미지) 위에 인물만 잘라 합성. targetCtx 는 미러 블록 안.
   function captureBase(targetCtx, W, H){
-    if(color!=='transparent'){ targetCtx.fillStyle=color; targetCtx.fillRect(0,0,W,H); }
+    if(bgImg){
+      targetCtx.save();
+      if(mirror){ targetCtx.translate(W,0); targetCtx.scale(-1,1); }
+      coverDraw(targetCtx, bgImg, bgImg.naturalWidth||bgImg.width, bgImg.naturalHeight||bgImg.height, W, H);
+      targetCtx.restore();
+    } else if(color!=='transparent'){ targetCtx.fillStyle=color; targetCtx.fillRect(0,0,W,H); }
     const o=getOff(W,H), octx=o.getContext('2d');
     octx.setTransform(1,0,0,1,0,0); octx.globalCompositeOperation='source-over'; octx.clearRect(0,0,W,H);
     coverDraw(octx, video, video.videoWidth, video.videoHeight, W, H);
@@ -1110,18 +1139,22 @@ const BG = (()=>{
     targetCtx.drawImage(o, 0, 0);
   }
 
-  return { get on(){ return on; }, get ready(){ return on && !!maskCanvas; }, get color(){ return color; }, setColor, toggle, captureBase };
+  return { get on(){ return on; }, get ready(){ return on && !!maskCanvas; }, get color(){ return color; }, setColor, setImage, toggle, captureBase };
 })();
 
 /* 배경 색 선택 바 */
 const bgbar = document.getElementById('bgbar');
 const bgColorInput = document.getElementById('bgColorInput');
-function setBgSwatch(c){ [...bgbar.querySelectorAll('.sw[data-c]')].forEach(s=>s.classList.toggle('on', s.dataset.c===c)); }
+function clearBgActive(){ [...bgbar.querySelectorAll('.sw')].forEach(s=>s.classList.remove('on')); }
 [...bgbar.querySelectorAll('.sw[data-c]')].forEach(sw=>{
-  sw.addEventListener('click', ()=>{ BG.setColor(sw.dataset.c); setBgSwatch(sw.dataset.c); });
+  sw.addEventListener('click', ()=>{ BG.setColor(sw.dataset.c); clearBgActive(); sw.classList.add('on'); });
 });
-bgColorInput.addEventListener('input', e=>{ BG.setColor(e.target.value); setBgSwatch(null); });
-setBgSwatch('#ffffff');
+[...bgbar.querySelectorAll('.sw[data-img]')].forEach(sw=>{
+  sw.addEventListener('click', ()=>{ BG.setImage(sw.dataset.img); clearBgActive(); sw.classList.add('on'); });
+});
+bgColorInput.addEventListener('input', e=>{ BG.setColor(e.target.value); clearBgActive(); bgColorInput.closest('.sw').classList.add('on'); });
+// 기본: 흰색 선택 표시
+const _white=[...bgbar.querySelectorAll('.sw[data-c]')].find(s=>s.dataset.c==='#ffffff'); if(_white) _white.classList.add('on');
 
 </script>
 </body>
