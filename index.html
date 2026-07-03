@@ -443,7 +443,7 @@ OVERLAYS.forEach(o=>{
   tray.appendChild(chip);
 });
 
-const FACE_FIT_K = 2.0;   // 캐릭터 스티커 박스 폭 ≈ 얼굴폭 * K. 얼굴 크기에 맞춰 자동 스케일.
+const FACE_FIT_K = 1.2;   // 캐릭터 스티커 박스 폭 ≈ 얼굴폭 * K. 얼굴 크기에 맞춰 자동 스케일.
 async function onPick(o, chip){
   if(o.type==="none"){
     activeFrame=null; frameLayer.innerHTML="";
