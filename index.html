@@ -814,9 +814,9 @@ const KID = (()=>{
     const cx=(eR.x+eL.x)/2, cy=(eR.y+eL.y)/2;
     const interI=Math.hypot(eL.x-eR.x, eL.y-eR.y)||1;
     const roll=Math.atan2(eL.y-eR.y, eL.x-eR.x);
-    const rIn=toPx(lm[133]);                        // 133=오른눈 안쪽
-    const reCx=(eR.x+rIn.x)/2, reCy=(eR.y+rIn.y)/2;
-    const eyeW=Math.hypot(rIn.x-eR.x, rIn.y-eR.y)||1;
+    const lIn=toPx(lm[362]);                        // 362=왼눈 안쪽 → 반대쪽 눈에 모노클
+    const reCx=(eL.x+lIn.x)/2, reCy=(eL.y+lIn.y)/2;
+    const eyeW=Math.hypot(lIn.x-eL.x, lIn.y-eL.y)||1;
     return {cx,cy,interI,roll,reCx,reCy,eyeW};
   }
   function drawHat(ctx, cw, ch, lm){
