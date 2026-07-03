@@ -686,8 +686,8 @@ function toast(msg){ hint.textContent=msg; hint.classList.add('show'); clearTime
     hint.textContent='한 손가락으로 이동 · 두 손가락으로 크기·회전 · 아래 버튼으로도 조절'; }, 1700); }
 
 /* ============ 시작 ============ */
-stage.classList.toggle('mirror', mirror); mirrorBtn.classList.toggle('on', mirror);
 try{ const _a=JSON.parse(localStorage.getItem(AUTOKEY)||'null'); if(_a && ((_a.stickers&&_a.stickers.length)||_a.frame)) applyLayout(_a); }catch(e){}
+mirror=true; stage.classList.toggle('mirror', mirror); mirrorBtn.classList.toggle('on', mirror); // 좌우반전은 항상 기본 ON (복원값 무시)
 if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
   startCamera();
 } else {
