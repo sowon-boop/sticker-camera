@@ -326,11 +326,11 @@ const svg = (inner, vb="0 0 400 400") =>
 const OVERLAYS = [
   { id:"none", name:"없음", type:"none" },
   { id:"bg_remove", name:"배경", type:"bg", emoji:"🎨" },
-  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, preset:{fx:0.44, scale:1.5}, src:"stickers/kaito-kid-poke6.png" },
-  { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.58, scale:1.45}, src:"stickers/kaito-kid-kiss.png" },
-  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.45}, src:"stickers/kaito-kid-hand4.png" },
-  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.45}, src:"stickers/kaito-kid-half5.png" },
-  { id:"amuro_punch", name:"아무로 주먹👊", type:"sticker", w:240, filter:true, preset:{fx:0.36, scale:1.5}, src:"stickers/amuro-punch2.png" },
+  { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, preset:{fx:0.44, scale:1.15}, src:"stickers/kaito-kid-poke6.png" },
+  { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.58, scale:1.15}, src:"stickers/kaito-kid-kiss.png" },
+  { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.15}, src:"stickers/kaito-kid-hand4.png" },
+  { id:"kaito_half", name:"반쪽하트🫶", type:"sticker", w:240, filter:true, preset:{fx:0.42, scale:1.15}, src:"stickers/kaito-kid-half5.png" },
+  { id:"amuro_punch", name:"아무로 주먹👊", type:"sticker", w:240, filter:true, preset:{fx:0.36, scale:1.15}, src:"stickers/amuro-punch2.png" },
   { id:"conan_kid_v", name:"코난&키드✌️", type:"group", src:"stickers/kaito-conan-v.png",
     items:[ {src:"stickers/kaito-kid-v3.png", w:240, fx:0.26, scale:1.2},
             {src:"stickers/kaito-conan-v.png", w:240, fx:0.74, scale:1.15} ] },
@@ -398,6 +398,7 @@ async function startCamera(){
     video.style.display = "block";
     hideMsg();
     enableCapture(true);
+    try{ KID.preload(); }catch(_){}   // 얼굴 모델 백그라운드 로드 → 필터 크기 자동맞춤 즉시 반응
   }catch(err){
     mode = null;
     enableCapture(false);
@@ -442,7 +443,8 @@ OVERLAYS.forEach(o=>{
   tray.appendChild(chip);
 });
 
-function onPick(o, chip){
+const FACE_FIT_K = 2.0;   // 캐릭터 스티커 박스 폭 ≈ 얼굴폭 * K. 얼굴 크기에 맞춰 자동 스케일.
+async function onPick(o, chip){
   if(o.type==="none"){
     activeFrame=null; frameLayer.innerHTML="";
     setActiveChip(chip);
@@ -508,7 +510,13 @@ function onPick(o, chip){
       addStickerEx(o, {cx:r.width*saved.fx, cy:r.height*saved.fy, scale:saved.scale, rot:saved.rot||0}, true);
     } else {
       const p=o.preset||{};
-      addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale:p.scale??1.3, rot:0}, true);
+      let scale = p.scale ?? 1.2;
+      // 얼굴 크기에 맞춰 자동 스케일 (기기 화각 달라도 얼굴 대비 동일). 얼굴 못 찾으면 기본값.
+      chip.classList.add('loading');
+      const ff = await KID.measureOnce();
+      chip.classList.remove('loading');
+      if(ff){ scale = clamp(FACE_FIT_K*ff/0.6, .4, 4); }
+      addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale, rot:0}, true);
     }
     chip.classList.add('active');
     return;
@@ -876,8 +884,8 @@ function getLayout(){
     scale:+el.dataset.scale, rot:+el.dataset.rot }));
   return { frame: activeFrame?activeFrame.id:null, mirror, stickers };
 }
-const AUTOKEY='camframe_autosave_v2';   // v2: 크기를 화면 비율 기준으로 바꾸며 옛 픽셀 기반 저장값 폐기
-const FPOSKEY='camframe_filterpos_v2';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
+const AUTOKEY='camframe_autosave_v3';   // v3: 얼굴 크기 기반 자동 스케일 도입 → 옛 저장값 폐기
+const FPOSKEY='camframe_filterpos_v3';  // 필터별 마지막 위치·크기 기억 (탭 시 그대로 복원)
 function loadFpos(){ try{ return JSON.parse(localStorage.getItem(FPOSKEY)||'{}'); }catch(e){ return {}; } }
 let fpos = loadFpos();
 let _autoT=null;
@@ -1132,7 +1140,23 @@ const KID = (()=>{
   // 캡처: 현재 얼굴에 켜진 아이템(모자/안경)을 대상 ctx(미러 블록 안)에 그린다.
   function captureDraw(targetCtx, W, H){ if(!anyOn() || !lastFaces.length) return; lastFaces.forEach(f=>drawAll(targetCtx, W, H, f)); }
 
-  return { get on(){ return anyOn(); }, isOn:(item)=>!!items[item], captureDraw, toggle };
+  // 모델 미리 로드 (카메라 시작 시 백그라운드로 → 필터 자동맞춤이 즉각 되게)
+  async function preload(){ try{ await ensureModel(); }catch(_){} }
+  // 현재 프레임에서 얼굴폭을 측정해 스테이지폭 대비 비율로 반환 (AR 안 켜도 1회 측정). 얼굴 없으면 null.
+  async function measureOnce(){
+    if(mode!=="camera" || !video.videoWidth) return null;
+    await ensureModel();
+    if(loadFailed || !landmarker) return null;
+    let res=null; try{ res=landmarker.detectForVideo(video, performance.now()); }catch(e){ return null; }
+    if(res && res.faceLandmarks && res.faceLandmarks.length){
+      const {w,h}=sizeOverlay();
+      const f=faceFrame(res.faceLandmarks[0], w, h);
+      return f.faceW / w;
+    }
+    return null;
+  }
+
+  return { get on(){ return anyOn(); }, isOn:(item)=>!!items[item], captureDraw, toggle, preload, measureOnce };
 })();
 
 /* ============================================================
