@@ -528,14 +528,30 @@ function addStickerEx(o, tf, doSelect){
   return el;
 }
 function addSticker(o){ return addStickerEx(o, null, true); }
+const REF_W = 400;   // 기준 스테이지 폭. 크기를 화면 폭 비율로 계산 → 기기 달라도 프레임 대비 동일 비율.
+let stageWpx = 0, lastStageW = 0, lastStageH = 0;
+function curStageW(){ const w = stage.getBoundingClientRect().width; if(w) stageWpx = w; return stageWpx || REF_W; }
 function applyTransform(el){
-  const w = (+el.dataset.w) * (+el.dataset.scale);
+  const w = (+el.dataset.w)/REF_W * curStageW() * (+el.dataset.scale);
   el.style.width = w + "px";
   el.style.left = el.dataset.cx + "px";
   el.style.top  = el.dataset.cy + "px";
   el.style.setProperty('--rot', el.dataset.rot + "deg");
   autosave();
 }
+// 화면 크기가 바뀌면(회전 등) 위치는 비율로 재배치, 크기는 자동 반영
+function reflowStickers(){
+  const r = stage.getBoundingClientRect();
+  if(lastStageW && r.width && (r.width!==lastStageW || r.height!==lastStageH)){
+    const rx = r.width/lastStageW, ry = r.height/lastStageH;
+    [...layer.querySelectorAll('.sticker')].forEach(el=>{
+      el.dataset.cx = (+el.dataset.cx)*rx; el.dataset.cy = (+el.dataset.cy)*ry;
+    });
+  }
+  lastStageW = r.width||lastStageW; lastStageH = r.height||lastStageH; stageWpx = r.width||stageWpx;
+  [...layer.querySelectorAll('.sticker')].forEach(applyTransform);
+}
+window.addEventListener('resize', reflowStickers);
 function select(el){
   if(selected) selected.classList.remove('selected');
   selected = el;
@@ -714,7 +730,7 @@ async function drawShot(cnv, cx, W, H, dpr){
   // 스티커 (미러 안 함)
   for(const el of [...layer.querySelectorAll('.sticker')]){
     const img = el.querySelector('img');
-    const w = (+el.dataset.w)*(+el.dataset.scale)*dpr;
+    const w = (+el.dataset.w)/REF_W * W * (+el.dataset.scale);   // 화면 폭 비율 기준(캔버스 폭 W = 스테이지폭*dpr)
     const h = w * ((img.naturalHeight||1)/(img.naturalWidth||1));
     const px = (+el.dataset.cx)*dpr, py = (+el.dataset.cy)*dpr;
     const rot = (+el.dataset.rot)*Math.PI/180;
@@ -907,6 +923,7 @@ function toast(msg){ hint.textContent=msg; hint.classList.add('show'); clearTime
     hint.textContent='한 손가락으로 이동 · 두 손가락으로 크기·회전 · 아래 버튼으로도 조절'; }, 1700); }
 
 /* ============ 시작 ============ */
+{ const _r=stage.getBoundingClientRect(); lastStageW=_r.width; lastStageH=_r.height; stageWpx=_r.width; }
 try{ const _a=JSON.parse(localStorage.getItem(AUTOKEY)||'null'); if(_a && ((_a.stickers&&_a.stickers.length)||_a.frame)) applyLayout(_a); }catch(e){}
 mirror=true; stage.classList.toggle('mirror', mirror); mirrorBtn.classList.toggle('on', mirror); // 좌우반전은 항상 기본 ON (복원값 무시)
 if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
