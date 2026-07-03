@@ -385,21 +385,25 @@ function onPick(o, chip){
     updateClear();
     return;
   }
-  // 고정 필터 스티커: 탭하면 정해진 위치·크기로 하나만 뜨고, 다시 탭하면 사라짐 (스택 안 됨)
+  // 고정 필터: 한 번에 하나만. 탭하면 이전 필터는 사라지고 교체, 같은 걸 다시 탭하면 꺼짐. (각자 위치·크기 기억)
   if(o.filter){
     const existing=[...layer.querySelectorAll('.sticker')].find(el=>el.dataset.id===o.id);
-    if(existing){ removeSticker(existing); chip.classList.remove('active'); }
-    else {
-      const r=stage.getBoundingClientRect();
-      const saved=fpos[o.id];
-      if(saved){
-        addStickerEx(o, {cx:r.width*saved.fx, cy:r.height*saved.fy, scale:saved.scale, rot:saved.rot||0}, true);
-      } else {
-        const p=o.preset||{};
-        addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale:p.scale??1.3, rot:0}, true);
-      }
-      chip.classList.add('active');
+    if(existing){ removeSticker(existing); chip.classList.remove('active'); return; }
+    // 다른 필터가 떠 있으면 먼저 제거 (필터는 상호 배타적)
+    [...layer.querySelectorAll('.sticker')].forEach(el=>{
+      const ov=OVERLAYS.find(x=>x.id===el.dataset.id);
+      if(ov && ov.filter) removeSticker(el);
+    });
+    [...tray.children].forEach(c=>{ const ov=OVERLAYS.find(x=>x.id===c.dataset.id); if(ov && ov.filter) c.classList.remove('active'); });
+    const r=stage.getBoundingClientRect();
+    const saved=fpos[o.id];
+    if(saved){
+      addStickerEx(o, {cx:r.width*saved.fx, cy:r.height*saved.fy, scale:saved.scale, rot:saved.rot||0}, true);
+    } else {
+      const p=o.preset||{};
+      addStickerEx(o, {cx:r.width*(p.fx??0.42), cy:r.height*(p.fy??0.5), scale:p.scale??1.3, rot:0}, true);
     }
+    chip.classList.add('active');
     return;
   }
   // sticker: add a new draggable instance
