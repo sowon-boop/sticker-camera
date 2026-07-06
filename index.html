@@ -1143,9 +1143,10 @@ const KID = (()=>{
     if(!watchImg || !lm) return;
     const f=handFrame(lm,cw,ch);
     const w=f.handW*WATCH_WIDTH_MULT, h=w*(watchImg.naturalHeight/watchImg.naturalWidth);
-    // 조준경을 손목에, 밴드는 아래로. 세로로 세워서(회전 없이) 얹는다 — 레퍼런스처럼.
+    // 조준경을 손목에, 밴드는 팔뚝(팔꿈치) 방향으로. 팔 각도 따라 회전 → 손목을 세우든 눕히든 항상 팔에 맞음.
     const ox=f.wrist.x, oy=f.wrist.y;
-    ctx.save(); ctx.translate(ox,oy);
+    const theta=f.ang - Math.PI/2;   // 이미지 아래(밴드)를 팔꿈치 방향에 맞춤 (조준경은 손 쪽)
+    ctx.save(); ctx.translate(ox,oy); ctx.rotate(theta);
     ctx.drawImage(watchImg, -w*WATCH_ANCHOR_X, -h*WATCH_ANCHOR_Y, w, h); ctx.restore();
   }
 
