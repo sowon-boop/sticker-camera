@@ -338,7 +338,7 @@ const OVERLAYS = [
   { id:"conan_glasses", name:"코난안경👓", type:"ar", arItem:"glasses", src:"stickers/conan-glasses4.png" },
   { id:"conan_bowtie", name:"나비넥타이🎀", type:"ar", arItem:"bowtie", src:"stickers/conan-bowtie3.png" },
   { id:"pika_mask", name:"피카츄탈⚡", type:"ar", arItem:"pika", src:"stickers/pika-mask.png" },
-  { id:"conan_watch", name:"코난시계⌚", type:"ar", arItem:"watch", src:"stickers/conan-watch2.png" },
+  { id:"conan_watch", name:"코난시계⌚", type:"ar", arItem:"watch", src:"stickers/conan-watch3.png" },
 ];
 
 /* ============ 상태 ============ */
@@ -988,11 +988,11 @@ const KID = (()=>{
   const PIKA_ANCHOR_Y = 0.607;
   const PIKA_CENTER = 0.25;
   const HAND_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
-  const WATCH_SRC = "stickers/conan-watch2.png";   // 코난 손목시계(투명 조준경+짧은밴드) → 손목에 트래킹
-  // 시계: 폭=손바닥폭*배수, 앵커=이미지 내 렌즈 중심(정중앙), 밴드는 팔 방향으로 정렬
-  const WATCH_WIDTH_MULT = 1.5;
-  const WATCH_ANCHOR_X = 0.50;
-  const WATCH_ANCHOR_Y = 0.50;
+  const WATCH_SRC = "stickers/conan-watch3.png";   // 코난 시계(뚜껑 열린 조준경) → 손목에 트래킹
+  // 시계: 폭=손바닥폭*배수, 앵커=이미지 내 밴드고리(손목 들어가는) 중심. 뚜껑은 그 위로 세워짐.
+  const WATCH_WIDTH_MULT = 1.7;
+  const WATCH_ANCHOR_X = 0.528;
+  const WATCH_ANCHOR_Y = 0.729;
 
   // ── 튜너블 (배치 미세조정) ──
   // 모자: 폭=눈사이거리*배수, lift=눈라인 위로 올림, 앵커=이미지 내 '머리에 얹히는' 지점
