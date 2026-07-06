@@ -1143,10 +1143,9 @@ const KID = (()=>{
     if(!watchImg || !lm) return;
     const f=handFrame(lm,cw,ch);
     const w=f.handW*WATCH_WIDTH_MULT, h=w*(watchImg.naturalHeight/watchImg.naturalWidth);
-    // 조준경을 손목에, 밴드는 팔뚝(팔꿈치) 방향으로. 팔 각도 따라 회전 → 손목을 세우든 눕히든 항상 팔에 맞음.
+    // 항상 세로 고정 — 손목을 눕혀도 시계는 세로(조준경 위, 밴드 아래)로 서 있음. 회전 없음.
     const ox=f.wrist.x, oy=f.wrist.y;
-    const theta=f.ang - Math.PI/2;   // 이미지 아래(밴드)를 팔꿈치 방향에 맞춤 (조준경은 손 쪽)
-    ctx.save(); ctx.translate(ox,oy); ctx.rotate(theta);
+    ctx.save(); ctx.translate(ox,oy);
     ctx.drawImage(watchImg, -w*WATCH_ANCHOR_X, -h*WATCH_ANCHOR_Y, w, h); ctx.restore();
   }
 
