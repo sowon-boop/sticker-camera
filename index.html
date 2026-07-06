@@ -1145,8 +1145,8 @@ const KID = (()=>{
     const w=f.handW*WATCH_WIDTH_MULT, h=w*(watchImg.naturalHeight/watchImg.naturalWidth);
     // 시계를 손목보다 살짝 팔꿈치 쪽으로 내려 얹음
     const ox=f.wrist.x+f.dir.x*(f.handW*0.15), oy=f.wrist.y+f.dir.y*(f.handW*0.15);
-    const theta=f.ang - Math.PI/2;   // 이미지 아래(밴드)를 팔꿈치 방향으로
-    ctx.save(); ctx.translate(ox,oy); ctx.rotate(theta);
+    // 눕히지 않고 항상 세워서(조준경이 카메라를 향하게) 얹는다. rotate 0.
+    ctx.save(); ctx.translate(ox,oy);
     ctx.drawImage(watchImg, -w*WATCH_ANCHOR_X, -h*WATCH_ANCHOR_Y, w, h); ctx.restore();
   }
 
