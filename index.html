@@ -92,6 +92,19 @@
   .stage.mirror .ar-overlay{transform:scaleX(-1);}
   .fx-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;z-index:7;}
   .stage.fx-on .fx-overlay{display:block;}
+  /* 3분할 영상 */
+  .split-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;z-index:8;background:#000;}
+  .stage.split-preview .split-canvas{display:block;}
+  .split-guide{position:absolute;inset:0;pointer-events:none;display:none;z-index:9;}
+  .stage.split-on .split-guide{display:block;}
+  .split-guide .l1,.split-guide .l2{position:absolute;left:0;right:0;height:0;border-top:2px dashed rgba(255,255,255,.85);}
+  .split-guide .l1{top:33.33%;} .split-guide .l2{top:66.66%;}
+  .split-status{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(20,16,31,.8);color:#fff;
+    font-weight:800;font-size:13px;padding:4px 12px;border-radius:12px;}
+  .split-bar{display:none;align-items:center;gap:8px;padding:8px 16px 0;flex-wrap:wrap;}
+  .split-bar.show{display:flex;}
+  .split-msg{font-size:12px;font-weight:700;color:var(--text);flex:1 1 auto;}
+  .stage.split-rec .split-status{background:#c0392b;}
   .bg-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;}
   .stage.bg-on .bg-overlay{display:block;}
   .stage.mirror .bg-overlay{transform:scaleX(-1);}
@@ -225,6 +238,7 @@
     <div class="top-btns">
       <button class="icon-btn" id="layoutBtn" title="구도 저장/불러오기">📁</button>
       <button class="icon-btn" id="cutBtn" title="인생네컷">🎞️</button>
+      <button class="icon-btn" id="splitBtn" title="3분할 영상">🎬</button>
       <button class="icon-btn" id="timerBtn" title="타이머">⏱️</button>
       <button class="icon-btn" id="mirrorBtn" title="좌우반전">🪞</button>
       <button class="icon-btn" id="flipBtn" title="카메라 전환">🔄</button>
@@ -240,6 +254,8 @@
       <div class="frame-overlay" id="frameLayer"></div>
       <canvas class="ar-overlay" id="arOverlay"></canvas>
       <canvas class="fx-overlay" id="fxOverlay"></canvas>
+      <canvas class="split-canvas" id="splitCanvas"></canvas>
+      <div class="split-guide" id="splitGuide"><span class="l1"></span><span class="l2"></span><div class="split-status" id="splitStatus">1 / 3</div></div>
       <div class="flash" id="flash"></div>
       <div class="countdown" id="countdown"></div>
       <div class="hint" id="hint">한 손가락으로 이동 · 두 손가락으로 크기·회전 · 아래 버튼으로도 조절</div>
@@ -290,6 +306,13 @@
   </div>
 
   <div class="tray" id="tray"></div>
+
+  <div class="split-bar" id="splitBar">
+    <span class="split-msg" id="splitMsg">🎬 3분할: 1번 칸부터 순서대로 녹화</span>
+    <button class="mini-btn" id="splitRedo" style="display:none">↻ 다시</button>
+    <button class="mini-btn" id="splitSave" style="display:none">💾 저장</button>
+    <button class="mini-btn" id="splitExit">✕ 나가기</button>
+  </div>
 
   <div class="controls">
     <div class="side-slot">
@@ -880,6 +903,7 @@ async function shootSingle(){
 }
 
 shutter.addEventListener('click', ()=>{
+  if(typeof SPLIT!=='undefined' && SPLIT.on){ SPLIT.recordCurrent(); return; }
   if(counting) return;
   if(cutMode) shootFourCut(); else shootSingle();
 });
@@ -1491,6 +1515,104 @@ const CONFETTI = (()=>{
   function toggle(){ if(on) disable(); else enable(); return on; }
   function captureDraw(targetCtx, W, H){ if(!on) return; const sx=W/(cv.width||1), sy=H/(cv.height||1); for(const p of parts) piece(targetCtx,p,sx,sy); }
   return { get on(){ return on; }, toggle, captureDraw };
+})();
+
+/* ============ 3분할 릴스 영상 ============ */
+const SPLIT = (()=>{
+  const cv=document.getElementById('splitCanvas'), cx=cv.getContext('2d');
+  const statusEl=document.getElementById('splitStatus');
+  const bar=document.getElementById('splitBar'), msg=document.getElementById('splitMsg');
+  const splitBtn=document.getElementById('splitBtn');
+  const redoBtn=document.getElementById('splitRedo'), saveBtn=document.getElementById('splitSave'), exitBtn=document.getElementById('splitExit');
+  const CLIP_MS=4000, FPS=30;
+  let mode=false, clips=[null,null,null], cur=0, recording=false, mr=null, chunks=[], rafId=null, previewing=false;
+
+  function pickMime(){ const cands=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm']; if(!window.MediaRecorder) return ''; for(const m of cands){ try{ if(MediaRecorder.isTypeSupported(m)) return m; }catch(_){}} return ''; }
+  function size(){ const r=stage.getBoundingClientRect(), dpr=Math.min(window.devicePixelRatio||1,2); const w=Math.round(r.width*dpr), h=Math.round(r.height*dpr); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } return {w,h}; }
+  function stopRAF(){ if(rafId){ cancelAnimationFrame(rafId); rafId=null; } }
+
+  function enter(){
+    if(mode) return; mode=true; clips=[null,null,null]; cur=0;
+    stage.classList.add('split-on'); bar.classList.add('show'); splitBtn.classList.add('on');
+    shutter.querySelector('.inner').textContent='●';
+    updateUI();
+  }
+  function exit(){
+    mode=false; previewing=false; recording=false; stopRAF();
+    stage.classList.remove('split-on','split-preview','split-rec'); bar.classList.remove('show'); splitBtn.classList.remove('on');
+    clips.forEach(c=>{ if(c&&c.url) URL.revokeObjectURL(c.url); if(c&&c.v) c.v.pause(); }); clips=[null,null,null]; cur=0;
+    shutter.querySelector('.inner').textContent='찰칵';
+  }
+  function updateUI(){
+    if(cur>=3){ statusEl.textContent='완성'; msg.textContent='완성! 저장하거나 다시 찍기'; redoBtn.style.display=''; saveBtn.style.display=''; }
+    else { statusEl.textContent=(cur+1)+' / 3'; msg.textContent=`🎬 ${cur+1}번 칸 — 셔터 누르면 ${CLIP_MS/1000}초 녹화`; redoBtn.style.display= cur>0?'':'none'; saveBtn.style.display='none'; }
+  }
+  function recordCurrent(){
+    if(!mode || recording || previewing || cur>=3) return;
+    if(mode==='photo' || !stream){ toast('카메라 모드에서만 돼요'); return; }
+    const mime=pickMime();
+    try{ mr=new MediaRecorder(stream, mime?{mimeType:mime}:undefined); }catch(e){ toast('이 브라우저는 녹화를 지원 안 해요'); return; }
+    chunks=[]; recording=true; stage.classList.add('split-rec');
+    mr.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+    mr.onstop=()=>{
+      const blob=new Blob(chunks,{type:(mr&&mr.mimeType)||'video/webm'}); const url=URL.createObjectURL(blob);
+      const v=document.createElement('video'); v.muted=true; v.loop=true; v.playsInline=true; v.setAttribute('playsinline',''); v.autoplay=true; v.src=url; v.play().catch(()=>{});
+      clips[cur]={url,v,blob}; cur++; recording=false; stage.classList.remove('split-rec');
+      if(cur>=3) startPreview(); else updateUI();
+    };
+    try{ mr.start(); }catch(e){ recording=false; stage.classList.remove('split-rec'); toast('녹화 시작 실패'); return; }
+    let t=CLIP_MS/1000; statusEl.textContent=`● ${t}`;
+    const iv=setInterval(()=>{ t--; if(t<=0){ clearInterval(iv); } else statusEl.textContent=`● ${t}`; }, 1000);
+    setTimeout(()=>{ try{ if(mr&&mr.state!=='inactive') mr.stop(); }catch(_){}}, CLIP_MS);
+  }
+  // 3개 클립을 각자 세로 1/3 밴드에 그림 (해당 클립의 i번째 1/3 을 cover, 미러)
+  function drawComposite(ctx,W,H){
+    const bh=H/3, bandAspect=W/bh;
+    for(let i=0;i<3;i++){
+      const c=clips[i];
+      if(!c||!c.v||!c.v.videoWidth){ ctx.fillStyle='#111'; ctx.fillRect(0,i*bh,W,bh); continue; }
+      const vw=c.v.videoWidth, vh=c.v.videoHeight, thirdH=vh/3, srcAspect=vw/thirdH;
+      let sW,sH,sx,sy;
+      if(srcAspect>bandAspect){ sH=thirdH; sW=thirdH*bandAspect; sx=(vw-sW)/2; sy=i*thirdH; }
+      else { sW=vw; sH=vw/bandAspect; sx=0; sy=i*thirdH+(thirdH-sH)/2; }
+      ctx.save(); ctx.translate(W,i*bh); ctx.scale(-1,1); ctx.drawImage(c.v, sx,sy,sW,sH, 0,0,W,bh); ctx.restore();
+    }
+    ctx.strokeStyle='rgba(255,255,255,.5)'; ctx.lineWidth=Math.max(2,H*0.004);
+    ctx.beginPath(); ctx.moveTo(0,bh); ctx.lineTo(W,bh); ctx.moveTo(0,bh*2); ctx.lineTo(W,bh*2); ctx.stroke();
+  }
+  function startPreview(){
+    previewing=true; stage.classList.remove('split-on'); stage.classList.add('split-preview');
+    clips.forEach(c=>{ if(c&&c.v){ try{ c.v.currentTime=0; }catch(_){} c.v.play().catch(()=>{}); } });
+    const loop=()=>{ if(!previewing) return; rafId=requestAnimationFrame(loop); const {w,h}=size(); drawComposite(cx,w,h); };
+    loop(); updateUI();
+  }
+  function redo(){
+    previewing=false; stopRAF(); stage.classList.remove('split-preview'); stage.classList.add('split-on');
+    clips.forEach(c=>{ if(c&&c.url) URL.revokeObjectURL(c.url); if(c&&c.v) c.v.pause(); }); clips=[null,null,null]; cur=0; updateUI();
+  }
+  async function save(){
+    if(cur<3) return;
+    const W=720,H=1280, ec=document.createElement('canvas'); ec.width=W; ec.height=H; const ex=ec.getContext('2d');
+    const mime=pickMime(); let rec;
+    try{ rec=new MediaRecorder(ec.captureStream(FPS), mime?{mimeType:mime}:undefined); }catch(e){ toast('저장(녹화) 미지원 브라우저'); return; }
+    const cs=[]; rec.ondataavailable=e=>{ if(e.data&&e.data.size) cs.push(e.data); };
+    saveBtn.textContent='저장 중…';
+    clips.forEach(c=>{ if(c&&c.v){ try{ c.v.currentTime=0; }catch(_){} c.v.play().catch(()=>{}); } });
+    const done=new Promise(res=>{ rec.onstop=res; });
+    let start=null; const dl=(ts)=>{ if(start===null) start=ts; drawComposite(ex,W,H); if(ts-start<CLIP_MS+150) requestAnimationFrame(dl); else { try{ rec.stop(); }catch(_){} } };
+    try{ rec.start(); }catch(e){ toast('저장 실패'); saveBtn.textContent='💾 저장'; return; }
+    requestAnimationFrame(dl); await done;
+    const blob=new Blob(cs,{type:(rec.mimeType)||'video/webm'}); const ext=(rec.mimeType||'').includes('mp4')?'mp4':'webm';
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`sowon_3split_${Date.now()}.${ext}`;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),6000);
+    saveBtn.textContent='💾 저장';
+    toast(ext==='mp4'?'저장됐어!':'저장됨(webm) — 인스타는 mp4 변환 필요할 수 있어');
+  }
+  splitBtn.addEventListener('click', ()=>{ if(mode) exit(); else enter(); });
+  exitBtn.addEventListener('click', exit);
+  redoBtn.addEventListener('click', redo);
+  saveBtn.addEventListener('click', save);
+  return { get on(){ return mode; }, recordCurrent };
 })();
 
 </script>
