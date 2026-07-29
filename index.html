@@ -90,6 +90,8 @@
   .ar-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;z-index:5;}
   .stage.ar-on .ar-overlay{display:block;}
   .stage.mirror .ar-overlay{transform:scaleX(-1);}
+  .fx-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;z-index:7;}
+  .stage.fx-on .fx-overlay{display:block;}
   .bg-overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;}
   .stage.bg-on .bg-overlay{display:block;}
   .stage.mirror .bg-overlay{transform:scaleX(-1);}
@@ -237,6 +239,7 @@
       <div id="layer"></div>
       <div class="frame-overlay" id="frameLayer"></div>
       <canvas class="ar-overlay" id="arOverlay"></canvas>
+      <canvas class="fx-overlay" id="fxOverlay"></canvas>
       <div class="flash" id="flash"></div>
       <div class="countdown" id="countdown"></div>
       <div class="hint" id="hint">한 손가락으로 이동 · 두 손가락으로 크기·회전 · 아래 버튼으로도 조절</div>
@@ -323,9 +326,59 @@
 const svg = (inner, vb="0 0 400 400") =>
   `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='${vb}'>${inner}</svg>`)}`;
 
+/* ============ 생일 프레임 (canvas 로 그려서 data-URL) ============ */
+const BDAY_THEMES = {
+  pastel:   { balloons:['#FFB3C6','#A8E6CF','#FFF3B0','#C9B6FF'], confetti:['#FFB3C6','#A8E6CF','#FFF3B0','#C9B6FF','#9AD0FF'], text:'#FF6F91' },
+  gold:     { balloons:['#F6A5C0','#E7C561','#F3D9A0','#D9A441'], confetti:['#E7C561','#F6A5C0','#F3D9A0','#FFFFFF','#F0C674'], text:'#C79A32' },
+  colorful: { balloons:['#FF5D5D','#FFB03A','#FFE24A','#5DDA6B','#4FA8FF','#B06BFF'], confetti:['#FF5D5D','#FFB03A','#FFE24A','#5DDA6B','#4FA8FF','#B06BFF'], text:'#FF3D7F' },
+};
+function makeBirthdayFrame(t){
+  const W=768, H=1024, c=document.createElement('canvas'); c.width=W; c.height=H;
+  const x=c.getContext('2d');
+  function balloon(bx,by,r,col){
+    x.save();
+    x.strokeStyle='rgba(150,150,150,.5)'; x.lineWidth=2;
+    x.beginPath(); x.moveTo(bx,by+r*1.15); x.quadraticCurveTo(bx+r*0.5,by+r*2, bx-r*0.25,by+r*2.9); x.stroke();
+    x.fillStyle=col; x.beginPath(); x.ellipse(bx,by,r*0.82,r,0,0,Math.PI*2); x.fill();
+    x.fillStyle='rgba(255,255,255,.4)'; x.beginPath(); x.ellipse(bx-r*0.28,by-r*0.34,r*0.16,r*0.26,-0.4,0,Math.PI*2); x.fill();
+    x.fillStyle=col; x.beginPath(); x.moveTo(bx-r*0.13,by+r*0.98); x.lineTo(bx+r*0.13,by+r*0.98); x.lineTo(bx,by+r*1.22); x.closePath(); x.fill();
+    x.restore();
+  }
+  const B=t.balloons;
+  balloon(95,160,62,B[0]); balloon(195,115,52,B[1%B.length]); balloon(150,225,46,B[2%B.length]);
+  balloon(W-95,160,62,B[1%B.length]); balloon(W-195,115,52,B[2%B.length]); balloon(W-150,225,46,B[0]);
+  const CF=t.confetti; let seed=98765; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+  for(let i=0;i<80;i++){
+    let px,py; const z=rnd();
+    if(z<0.4){ px=rnd()*W; py=rnd()*H*0.30; }
+    else if(z<0.78){ px=rnd()*W; py=H*0.72+rnd()*H*0.28; }
+    else if(z<0.89){ px=rnd()*W*0.13; py=rnd()*H; }
+    else { px=W-rnd()*W*0.13; py=rnd()*H; }
+    x.save(); x.translate(px,py); x.rotate(rnd()*6.28);
+    x.fillStyle=CF[i%CF.length]; x.fillRect(-6,-4,12,8); x.restore();
+  }
+  x.textAlign='center'; x.textBaseline='middle'; x.lineJoin='round';
+  function txt(s,cy,size){
+    x.font=`800 ${size}px "Jua","Poppins",system-ui,sans-serif`;
+    x.strokeStyle='rgba(255,255,255,.95)'; x.lineWidth=size*0.2; x.strokeText(s,W/2,cy);
+    x.fillStyle=t.text; x.fillText(s,W/2,cy);
+  }
+  txt('HAPPY BIRTHDAY', 315, 60); txt('소원', 400, 88);
+  x.font='66px system-ui,"Apple Color Emoji","Segoe UI Emoji"';
+  x.fillText('🎂', W/2, H-95);
+  x.font='52px system-ui,"Apple Color Emoji","Segoe UI Emoji"';
+  x.fillText('🎁', W*0.2, H-75); x.fillText('🎉', W*0.8, H-75);
+  return c.toDataURL('image/png');
+}
+
 const OVERLAYS = [
   { id:"none", name:"없음", type:"none" },
   { id:"bg_remove", name:"배경", type:"bg", emoji:"🎨" },
+  { id:"confetti", name:"꽃가루", type:"confetti", emoji:"🎉" },
+  { id:"party_hat", name:"생일고깔", type:"ar", arItem:"partyhat", emoji:"🥳" },
+  { id:"bday_pastel", name:"생일 파스텔", type:"frame", emoji:"🎂", src: makeBirthdayFrame(BDAY_THEMES.pastel) },
+  { id:"bday_gold", name:"생일 골드", type:"frame", emoji:"🎈", src: makeBirthdayFrame(BDAY_THEMES.gold) },
+  { id:"bday_party", name:"생일 컬러풀", type:"frame", emoji:"🎊", src: makeBirthdayFrame(BDAY_THEMES.colorful) },
   { id:"kaito_poke", name:"괴도키드👉", type:"sticker", w:240, filter:true, preset:{fx:0.44, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-poke6.png" },
   { id:"kaito_kiss", name:"괴도키드💋", type:"sticker", w:240, filter:true, preset:{fx:0.58, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-kiss.png" },
   { id:"kaito_hand", name:"괴도키드🤚", type:"sticker", w:240, filter:true, preset:{fx:0.42, fy:0.5, hfit:0.95}, src:"stickers/kaito-kid-hand4.png" },
@@ -462,6 +515,10 @@ async function onPick(o, chip){
     // 얼굴 트래킹 아이템(모자/안경) 토글 — 각각 독립적으로 켜고 끔
     chip.classList.add('loading');
     KID.toggle(o.arItem||'hat').then(isOn=>{ chip.classList.remove('loading'); chip.classList.toggle('active', isOn); });
+    return;
+  }
+  if(o.type==="confetti"){
+    chip.classList.toggle('active', CONFETTI.toggle());
     return;
   }
   if(o.type==="bg"){
@@ -764,6 +821,7 @@ async function drawShot(cnv, cx, W, H, dpr){
     cx.save(); cx.translate(px, py); cx.rotate(rot); cx.drawImage(img, -w/2, -h/2, w, h); cx.restore();
   }
   if(activeFrame){ const fimg = await loadImg(activeFrame.src); cx.drawImage(fimg, 0, 0, W, H); }
+  CONFETTI.captureDraw(cx, W, H);   // 꽃가루는 맨 위에
 }
 
 function showResult(blob){ lastBlob=blob; if(resultImg.src) URL.revokeObjectURL(resultImg.src); resultImg.src=URL.createObjectURL(blob); setTimeout(()=>result.classList.add('show'), 260); }
@@ -1010,9 +1068,9 @@ const KID = (()=>{
   const arCtx = arOverlay.getContext('2d');
   const kidBtn = document.getElementById('kidBtn');  // 헤더 버튼 제거됨 → null 가능 (트레이 칩으로 토글)
 
-  const items = { hat:false, glasses:false, bowtie:false, pika:false, watch:false };   // 얼굴/손 트래킹 아이템별 on/off
+  const items = { hat:false, glasses:false, bowtie:false, pika:false, watch:false, partyhat:false };   // 얼굴/손 트래킹 아이템별 on/off
   const anyOn = ()=> items.hat || items.glasses || items.bowtie || items.pika || items.watch;
-  const faceItemsOn = ()=> items.hat || items.glasses || items.bowtie || items.pika;   // 얼굴 모델 필요
+  const faceItemsOn = ()=> items.hat || items.glasses || items.bowtie || items.pika || items.partyhat;   // 얼굴 모델 필요
   let landmarker=null, loading=false, loadFailed=false;
   let handModel=null, handLoading=false, handFailed=false, lastHands=[];
   let hatImg=null, glassesImg=null, bowtieImg=null, pikaImg=null, watchImg=null, rafId=null, lastVideoTime=-1, lastFaces=[];
@@ -1121,11 +1179,32 @@ const KID = (()=>{
     ctx.save(); ctx.translate(fx,fy); ctx.rotate(f.roll);
     ctx.drawImage(pikaImg, -w*PIKA_ANCHOR_X, -h*PIKA_ANCHOR_Y, w, h); ctx.restore();
   }
+  function drawPartyHat(ctx, cw, ch, lm){
+    if(!lm) return;
+    const f=faceFrame(lm,cw,ch);
+    const up={x:Math.sin(f.roll), y:-Math.cos(f.roll)};
+    const baseW=f.interI*1.7, height=f.interI*2.4, lift=f.interI*1.05;
+    const bx=f.cx+up.x*lift, by=f.cy+up.y*lift;   // 밑변 중심(머리 위)
+    ctx.save(); ctx.translate(bx,by); ctx.rotate(f.roll);
+    const bl={x:-baseW/2,y:0}, br={x:baseW/2,y:0}, apex={x:0,y:-height};
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y); ctx.lineTo(apex.x,apex.y); ctx.lineTo(br.x,br.y); ctx.closePath();
+    ctx.fillStyle='#FF5D9E'; ctx.fill();
+    ctx.save(); ctx.clip();   // 줄무늬를 콘 안에만
+    const cols=['#FFD166','#4FA8FF','#5DDA6B'];
+    for(let i=1;i<=4;i++){ const ww=baseW*(1-i/5), yy=-height*(i/5);
+      ctx.fillStyle=cols[(i-1)%cols.length]; ctx.fillRect(-ww/2, yy-height*0.045, ww, height*0.055); }
+    ctx.restore();
+    ctx.lineWidth=Math.max(2,f.interI*0.05); ctx.strokeStyle='#3a2a4a'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(bl.x,bl.y); ctx.lineTo(apex.x,apex.y); ctx.lineTo(br.x,br.y); ctx.closePath(); ctx.stroke();
+    ctx.fillStyle='#FFF3B0'; ctx.beginPath(); ctx.arc(apex.x,apex.y,baseW*0.15,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
   function drawAll(ctx, cw, ch, lm){
     if(items.pika) drawPika(ctx,cw,ch,lm);      // 얼굴 탈(맨 아래, 구멍으로 얼굴 보임)
     if(items.bowtie) drawBowtie(ctx,cw,ch,lm);
     if(items.glasses) drawGlasses(ctx,cw,ch,lm);
     if(items.hat) drawHat(ctx,cw,ch,lm);          // 모자(맨 위)
+    if(items.partyhat) drawPartyHat(ctx,cw,ch,lm); // 생일 고깔(맨 위)
   }
 
   // 손 21개 랜드마크 → 손목 위치/손바닥 폭/팔뚝(팔꿈치) 방향
@@ -1377,6 +1456,33 @@ function clearBgActive(){ [...bgbar.querySelectorAll('.sw')].forEach(s=>s.classL
 bgColorInput.addEventListener('input', e=>{ BG.setColor(e.target.value); clearBgActive(); bgColorInput.closest('.sw').classList.add('on'); });
 // 기본: 흰색 선택 표시
 const _white=[...bgbar.querySelectorAll('.sw[data-c]')].find(s=>s.dataset.c==='#ffffff'); if(_white) _white.classList.add('on');
+
+/* ============ 꽃가루(종이 흩날림) 효과 ============ */
+const CONFETTI = (()=>{
+  const cv=document.getElementById('fxOverlay'), cx=cv.getContext('2d');
+  const COLORS=['#FF5D5D','#FFB03A','#FFE24A','#5DDA6B','#4FA8FF','#B06BFF','#FF7EC0','#66E0D0'];
+  let on=false, rafId=null, parts=[];
+  function size(){ const r=stage.getBoundingClientRect(), dpr=Math.min(window.devicePixelRatio||1,3);
+    const w=Math.round(r.width*dpr), h=Math.round(r.height*dpr); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } return {w,h}; }
+  function spawn(w,h,top){ return {
+    x:Math.random()*w, y: top ? -20-Math.random()*h*0.4 : Math.random()*h,
+    vy:(2.2+Math.random()*3.2)*(h/900), vx:(Math.random()-0.5)*1.5*(w/500),
+    sway:0.6+Math.random()*1.8, phase:Math.random()*6.28, rot:Math.random()*6.28, vr:(Math.random()-0.5)*0.24,
+    w:(9+Math.random()*9), h:(7+Math.random()*9), col:COLORS[(Math.random()*COLORS.length)|0], round:Math.random()<0.28 }; }
+  function ensure(w,h){ const target=Math.max(50,Math.round(w/8)); while(parts.length<target) parts.push(spawn(w,h,true)); }
+  function piece(g,p,sx,sy){ g.save(); g.translate(p.x*sx,p.y*sy); g.rotate(p.rot); g.fillStyle=p.col;
+    if(p.round){ g.beginPath(); g.ellipse(0,0,p.w*0.5*sx,p.h*0.5*sy,0,0,6.28); g.fill(); }
+    else g.fillRect(-p.w/2*sx,-p.h/2*sy,p.w*sx,p.h*sy); g.restore(); }
+  function step(){ if(!on) return; rafId=requestAnimationFrame(step);
+    const {w,h}=size(); ensure(w,h); cx.clearRect(0,0,w,h);
+    for(const p of parts){ p.phase+=0.05; p.y+=p.vy; p.x+=p.vx+Math.sin(p.phase)*p.sway; p.rot+=p.vr;
+      if(p.y>h+25){ Object.assign(p, spawn(w,h,true)); } piece(cx,p,1,1); } }
+  function enable(){ on=true; stage.classList.add('fx-on'); const {w,h}=size(); parts=[]; ensure(w,h); parts.forEach(p=>{ p.y=Math.random()*h; }); if(!rafId) step(); }
+  function disable(){ on=false; stage.classList.remove('fx-on'); if(rafId){ cancelAnimationFrame(rafId); rafId=null; } cx.clearRect(0,0,cv.width,cv.height); }
+  function toggle(){ if(on) disable(); else enable(); return on; }
+  function captureDraw(targetCtx, W, H){ if(!on) return; const sx=W/(cv.width||1), sy=H/(cv.height||1); for(const p of parts) piece(targetCtx,p,sx,sy); }
+  return { get on(){ return on; }, toggle, captureDraw };
+})();
 
 </script>
 </body>
