@@ -73,6 +73,20 @@
     background:#FFF3CC; border:4px dashed var(--gold); color:var(--muted); font-size:13px; text-align:center; padding:10px;}
   .again{margin-top:18px; width:100%; padding:14px; border:none; border-radius:16px; font-family:inherit; font-size:16px; font-weight:800; color:#7a5618; background:var(--yellow); cursor:pointer;}
   .close{margin-top:8px; width:100%; padding:12px; border:2px solid var(--line); border-radius:16px; font-family:inherit; font-size:14px; font-weight:700; color:#8a7635; background:#FFF6DE; cursor:pointer;}
+  .whoin{margin-top:16px; width:100%; padding:13px; border:2.5px solid var(--line); border-radius:14px;
+    font-family:inherit; font-size:15px; text-align:center; color:var(--ink); background:#FFFCF3; outline:none;}
+  .whoin:focus{border-color:var(--pink); background:#fff;}
+  .whoin::placeholder{color:#D8C99C; font-size:13.5px;}
+  .leftnote{margin-top:10px; font-size:13px; color:var(--muted);}
+  .stock{margin-top:12px; font-size:14px; color:#9a8235; font-weight:700;}
+  .tools{margin-top:10px; display:flex; gap:8px; justify-content:center;}
+  .tools button{padding:7px 13px; border:2px solid var(--line); border-radius:999px; background:#FFF9E8;
+    font-family:inherit; font-size:12.5px; font-weight:700; color:#a8935a; cursor:pointer;}
+  .logrow{display:flex; align-items:center; gap:9px; padding:9px 11px; border-bottom:1.5px solid var(--line); font-size:14.5px; text-align:left;}
+  .logrow:last-child{border-bottom:none;}
+  .logrow .lp{flex:1; color:var(--ink);}
+  .logrow .lw{color:#e07a97; font-size:13px;}
+  .logempty{color:var(--muted); font-size:14px; padding:14px 0;}
 </style>
 </head>
 <body>
@@ -92,20 +106,37 @@
       </div>
     </div>
     <div class="hint" id="hint">👆 손잡이를 빙글 돌려봐!</div>
+    <div class="stock" id="stock"></div>
+    <div class="tools"><button id="logBtn">📋 뽑힌 기록</button><button id="resetBtn">🔄 초기화</button></div>
   </div>
+
+  <div class="result" id="logView"><div class="prizecard" id="logCard"></div></div>
 
   <div class="result" id="result"><div class="prizecard" id="prizecard"></div></div>
 
 <script>
-/* ===== 가챠 상품 (자유 수정) — weight 클수록 잘 나옴 ===== */
+/* ===== 가챠 상품 — 각 1개씩만 있고, 뽑히면 사라진다 (id 는 저장용이라 바꾸지 말 것) ===== */
 const PRIZES = [
-  { emoji:"📸", name:"소원 포토카드", desc:"소원이 실물 사진 획득! 💖", photo:"images/sowon.jpg", weight:2 },
-  { emoji:"☕", name:"커피 쿠폰", desc:"소원이가 커피 한 잔 쏜다!", weight:3 },
-  { emoji:"🛵", name:"배달의민족 쿠폰", desc:"소원이가 배달 쏜다!", weight:2 },
-  { emoji:"🍫", name:"간식 하나", desc:"원하는 간식 하나 골라!", weight:3 },
-  { emoji:"🫶", name:"소원이랑 투샷", desc:"소원이랑 투샷 찍을 권리!", weight:3 },
-  { emoji:"😜", name:"꽝!", desc:"다음 기회에… 한 번 더 돌려!", weight:2 },
+  { id:"love",    emoji:"💖", name:"소원의 사랑",        desc:"무한대의 사랑을 드립니다 (환불 불가)" },
+  { id:"haidilao",emoji:"🌶️", name:"하이디라오 만원 할인권", desc:"소원이가 마라 쏜다!" },
+  { id:"letter",  emoji:"📝", name:"소원이의 손편지",     desc:"직접 써서 보내줌" },
+  { id:"jelly",   emoji:"🍬", name:"젤리",              desc:"달달한 젤리 한 봉지!" },
+  { id:"photo",   emoji:"📸", name:"소원 포토카드",       desc:"소원이 실물 사진 획득! 💖", photo:"images/sowon.jpg" },
+  { id:"coffee",  emoji:"☕", name:"커피 쿠폰",          desc:"소원이가 커피 한 잔 쏜다!" },
+  { id:"baemin",  emoji:"🛵", name:"배달의민족 쿠폰",     desc:"소원이가 배달 쏜다!" },
+  { id:"snack",   emoji:"🍫", name:"간식 하나",          desc:"원하는 간식 하나 골라!" },
+  { id:"twoshot", emoji:"🫶", name:"소원이랑 투샷",       desc:"소원이랑 투샷 찍을 권리!" },
+  { id:"errand",  emoji:"🙇", name:"소원이 심부름권",     desc:"뭐든 하나 시켜도 됨 (1회)" },
+  { id:"meal",    emoji:"🍜", name:"밥 한 끼",           desc:"소원이가 밥 산다!" },
 ];
+
+/* ===== 재고 — 이 기기에 저장. 뽑힌 상품은 다시 안 나온다 ===== */
+const STORE_KEY='sowon_gacha_taken_v1';
+function takenLog(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); }catch(e){ return []; } }
+function saveLog(a){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(a)); }catch(e){} }
+function remaining(){ const t=new Set(takenLog().map(x=>x.id)); return PRIZES.filter(p=>!t.has(p.id)); }
+function recordDraw(p){ const a=takenLog(); a.push({ id:p.id, name:p.name, who:'', ts:Date.now() }); saveLog(a); }
+function setWho(id,who){ const a=takenLog(); const e=a.find(x=>x.id===id); if(e){ e.who=who; saveLog(a); } }
 const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
 (function fillDome(){ const dome=document.getElementById('dome');
   for(let i=0;i<14;i++){ const c=document.createElement('span'); c.className='caps';
@@ -144,12 +175,14 @@ window.addEventListener('pointermove', e=>{ if(!dragging||busy) return;
 function endDrag(){ if(dragging && !busy){ dragging=false; if(Math.abs(turned)<THRESHOLD){ hint.textContent='조금 더 돌려봐! 🔄'; } } }
 window.addEventListener('pointerup', endDrag); window.addEventListener('pointercancel', endDrag);
 
-function pickPrize(){ const total=PRIZES.reduce((s,p)=>s+(p.weight||1),0); let r=Math.random()*total;
-  for(const p of PRIZES){ r-=(p.weight||1); if(r<=0) return p; } return PRIZES[PRIZES.length-1]; }
+function pickPrize(){ const r=remaining(); return r[(Math.random()*r.length)|0]; }
 function dispense(){
-  if(busy) return; busy=true; machine.classList.add('busy'); hint.textContent='두구두구… 🥁';
+  if(busy) return;
+  if(!remaining().length){ soldOut(); return; }
+  busy=true; machine.classList.add('busy'); hint.textContent='두구두구… 🥁';
   machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake');
   const prize=pickPrize(), col=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
+  recordDraw(prize); updateStockUI();
   document.getElementById('capTop').style.background=col;
   capOut.classList.remove('open','wobble'); capPrize.textContent=prize.emoji; capOut.style.transform=''; capOut.style.opacity='';
   // 1) 캡슐 배출
@@ -164,16 +197,57 @@ function dispense(){
 function showResult(p){
   const card=document.getElementById('prizecard');
   const photo = p.photo ? `<img class="photo" src="${p.photo}" alt="소원" onerror="this.outerHTML='<div class=\\'photo-ph\\'>여기에 소원 사진이 들어갈 예정 📸</div>'">` : '';
+  const left = remaining().length;
   card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>
-    <button class="again" id="againBtn">🎲 한 번 더</button><button class="close" id="closeBtn">닫기</button>`;
+    <input class="whoin" id="whoIn" type="text" placeholder="받은 사람 이름 (나중에 주려고!)" maxlength="12" autocomplete="off">
+    <button class="again" id="nextBtn">다음 사람에게 넘기기 ➜</button>
+    <div class="leftnote">남은 상품 ${left}개</div>`;
   card.style.animation='none'; void card.offsetWidth; card.style.animation='';
   document.getElementById('result').classList.add('show');
-  document.getElementById('againBtn').onclick=reset;
-  document.getElementById('closeBtn').onclick=()=>{ document.getElementById('result').classList.remove('show'); reset(); };
+  const whoIn=document.getElementById('whoIn');
+  whoIn.addEventListener('input', ()=> setWho(p.id, whoIn.value.trim()));
+  document.getElementById('nextBtn').onclick=()=>{ setWho(p.id, whoIn.value.trim()); reset(); };
 }
 function reset(){ document.getElementById('result').classList.remove('show');
   capOut.classList.remove('drop','open','wobble'); capOut.style.transform=''; capOut.style.opacity='0';
-  busy=false; machine.classList.remove('busy'); turned=0; hint.textContent='👆 손잡이를 빙글 돌려봐!'; }
+  busy=false; machine.classList.remove('busy'); turned=0;
+  updateStockUI();
+  if(!remaining().length) soldOut(); else hint.textContent='👆 손잡이를 빙글 돌려봐!';
+}
+function soldOut(){
+  machine.classList.add('busy');
+  hint.textContent='🎉 상품 다 나갔어! 수고했어 소원아';
+  updateStockUI();
+}
+function updateStockUI(){
+  const left=remaining().length;
+  const el=document.getElementById('stock');
+  if(el) el.textContent = left ? `🎁 남은 상품 ${left} / ${PRIZES.length}개` : '🎁 상품 모두 소진';
+}
+
+/* ===== 뽑힌 기록 / 초기화 ===== */
+function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+document.getElementById('logBtn').onclick=()=>{
+  const log=takenLog();
+  const rows = log.length
+    ? log.map(e=>`<div class="logrow"><span class="lp">${esc(e.name)}</span><span class="lw">${e.who?esc(e.who):'—'}</span></div>`).join('')
+    : `<div class="logempty">아직 아무도 안 뽑았어</div>`;
+  document.getElementById('logCard').innerHTML =
+    `<div class="pname" style="margin-top:0">📋 뽑힌 기록</div>
+     <div class="pdesc" style="margin-bottom:10px">${log.length}개 나감 · 남은 ${remaining().length}개</div>
+     ${rows}<button class="close" id="logClose" style="margin-top:16px">닫기</button>`;
+  document.getElementById('logView').classList.add('show');
+  document.getElementById('logClose').onclick=()=> document.getElementById('logView').classList.remove('show');
+};
+document.getElementById('resetBtn').onclick=()=>{
+  if(!confirm('뽑힌 기록을 전부 지우고 상품 11개를 다시 채울까?')) return;
+  saveLog([]); reset(); machine.classList.remove('busy');
+  hint.textContent='👆 손잡이를 빙글 돌려봐!'; updateStockUI();
+};
+
+/* 시작 상태 */
+updateStockUI();
+if(!remaining().length) soldOut();
 </script>
 </body>
 </html>
