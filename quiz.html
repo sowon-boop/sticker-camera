@@ -9,16 +9,16 @@
 <title>소원 퀴즈 🎂</title>
 <style>
   :root{
-    --cream:#FFF7F1; --card:#FFFFFF; --ink:#6A5560; --muted:#B6A6B0; --line:#F3E4EA;
-    --coral:#FF89A9; --coral2:#FFB48C; --lav:#C6BBF3; --mint:#8FE3C6; --gold:#F4C56B;
+    --cream:#FFFDF3; --card:#FFFFFF; --ink:#7A6533; --muted:#C7B888; --line:#F4ECD6;
+    --coral:#FFCF45; --coral2:#FFB03A; --lav:#C6BBF3; --mint:#8FE3C6; --gold:#F0B429; --wrong:#FF8FA0;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   body{margin:0; font-family:"Jua",system-ui,sans-serif;
-    background:linear-gradient(165deg,#FFF6EF 0%,#FDEBF0 55%,#F3ECFB 100%);
+    background:#FFF3CC;
     color:var(--ink); min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px;}
   .card{width:100%; max-width:440px; background:var(--card); border-radius:30px; padding:26px 22px 30px;
-    box-shadow:0 20px 44px rgba(255,137,169,.22), 0 4px 14px rgba(198,187,243,.18);}
-  h1{font-size:29px; margin:.15em 0 .1em; text-align:center; color:#5f4a56; letter-spacing:-.5px;}
+    box-shadow:0 20px 44px rgba(255,185,60,.26), 0 4px 14px rgba(255,200,90,.16);}
+  h1{font-size:29px; margin:.15em 0 .1em; text-align:center; color:#6b5220; letter-spacing:-.5px;}
   .sub{color:var(--muted); text-align:center; font-size:14.5px; margin-bottom:20px; line-height:1.6;}
   input[type=text]{width:100%; padding:15px 16px; border-radius:16px; border:2px solid var(--line);
     background:#FFFBFC; color:var(--ink); font-size:17px; font-family:inherit; text-align:center; outline:none; transition:border-color .15s;}
@@ -26,10 +26,10 @@
   input::placeholder{color:#D7C7D0;}
   .btn{display:block; width:100%; margin-top:12px; padding:16px; border:none; border-radius:18px; cursor:pointer;
     font-family:inherit; font-size:17.5px; font-weight:800; color:#fff; letter-spacing:.3px;
-    background:linear-gradient(135deg,var(--coral),var(--coral2)); box-shadow:0 8px 18px rgba(255,137,169,.35); transition:transform .1s, box-shadow .1s;}
+    background:var(--coral); box-shadow:0 8px 18px rgba(255,180,50,.4); transition:transform .1s, box-shadow .1s;}
   .btn:active{transform:translateY(1px) scale(.99); box-shadow:0 4px 10px rgba(255,137,169,.3);}
   .btn:disabled{opacity:.5; box-shadow:none;}
-  .btn.ghost{background:#FBEFF4; color:#8a6f7d; box-shadow:none; border:2px solid var(--line);}
+  .btn.ghost{background:#FFF6DE; color:#8a7635; box-shadow:none; border:2px solid var(--line);}
   .hidden{display:none;}
   .prog{display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:10px; font-family:"Gaegu",sans-serif;}
   .q{font-size:21px; line-height:1.45; margin:6px 0 20px; min-height:58px; color:#5f4a56;}
@@ -37,26 +37,26 @@
     border:2px solid var(--line); background:#FFFBFC; color:var(--ink); font-size:16.5px; font-family:inherit; cursor:pointer; transition:transform .08s;}
   .opt:active{transform:scale(.98);}
   .opt.correct{border-color:var(--mint); background:#EAFBF4; color:#3aa588;}
-  .opt.wrong{border-color:var(--coral); background:#FFF0F4; color:#d76a86;}
+  .opt.wrong{border-color:var(--wrong); background:#FFF0F3; color:#d76a86;}
   .opt.dim{opacity:.45;}
   .between{text-align:center;}
-  .score-big{font-size:46px; margin:6px 0; color:var(--coral);}
+  .score-big{font-size:46px; margin:6px 0; color:#E8A21C;}
   .pass{color:#c98a5a; font-weight:800; margin:14px 0; font-size:16.5px; line-height:1.6;}
   .board-item{display:flex; align-items:center; gap:11px; padding:13px 15px; border-radius:16px;
     background:#FFFBFC; border:2px solid var(--line); margin-bottom:9px;}
   .board-item .rk{font-size:21px; width:34px; text-align:center;}
   .board-item .nm{flex:1; font-size:16.5px; font-weight:800; color:#5f4a56; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
   .board-item .sc{color:#3aa588; font-weight:800;}
-  .board-item.first{background:linear-gradient(135deg,#FFF3DE,#FFE6EE); border-color:var(--gold);}
+  .board-item.first{background:#FFF1CE; border-color:var(--gold);}
   .cert{margin:18px 0; padding:22px 16px; border-radius:22px; text-align:center;
-    background:linear-gradient(150deg,#FFF3E4,#FFE7EF); border:2px dashed var(--gold);}
+    background:#FFF5D6; border:2px dashed var(--gold);}
   .cert .ttl{color:#d9a441; font-size:15px; letter-spacing:2px; font-weight:800;}
   .cert .who{font-size:30px; margin:10px 0; color:#e07a97;}
   .cert .desc{color:#a98f9a; font-size:13.5px; line-height:1.6;}
   .small{font-size:12.5px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.6;}
   .status{font-size:12px; text-align:center; margin-bottom:12px; color:var(--muted);}
   .status .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#D9C9D2; margin-right:6px; vertical-align:middle;}
-  .status.ok .dot{background:var(--mint);} .status.err .dot{background:var(--coral);}
+  .status.ok .dot{background:var(--mint);} .status.err .dot{background:var(--wrong);}
   .live{font-size:11.5px; color:#3aa588; text-align:center; margin-top:8px;}
   .deco{text-align:center; font-size:26px; margin-bottom:2px; letter-spacing:4px;}
 </style>
