@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>소원 퀴즈 🎂</title>
+<style>
+  :root{ --bg:#211A33; --surface:#2E2542; --surface2:#392E52; --line:#463a63;
+    --pink:#FF5D9E; --mint:#57E6C3; --yellow:#FFD166; --text:#F3EEFB; --muted:#A99CC4; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; font-family:"Jua","Poppins",system-ui,sans-serif; background:linear-gradient(160deg,#241b3a,#1a1428);
+    color:var(--text); min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px;}
+  .card{width:100%; max-width:460px; background:var(--surface); border:1px solid var(--line);
+    border-radius:24px; padding:22px 20px 26px; box-shadow:0 18px 50px rgba(0,0,0,.5);}
+  h1{font-size:26px; margin:.2em 0 .1em; text-align:center;}
+  .sub{color:var(--muted); text-align:center; font-size:14px; margin-bottom:18px; line-height:1.5;}
+  input[type=text]{width:100%; padding:14px 16px; border-radius:14px; border:1px solid var(--line);
+    background:var(--surface2); color:var(--text); font-size:17px; font-family:inherit; text-align:center;}
+  input::placeholder{color:var(--muted);}
+  .btn{display:block; width:100%; margin-top:12px; padding:15px; border:none; border-radius:16px; cursor:pointer;
+    font-family:inherit; font-size:17px; font-weight:800; color:#2a1a00;
+    background:linear-gradient(135deg,var(--pink),var(--yellow)); transition:transform .1s;}
+  .btn:active{transform:scale(.97);}
+  .btn.ghost{background:var(--surface2); color:var(--text); border:1px solid var(--line);}
+  .hidden{display:none;}
+  .prog{display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:8px;}
+  .q{font-size:20px; line-height:1.4; margin:6px 0 18px; min-height:56px;}
+  .opt{display:block; width:100%; text-align:left; margin-bottom:10px; padding:14px 16px; border-radius:14px;
+    border:2px solid var(--line); background:var(--surface2); color:var(--text); font-size:16px; font-family:inherit; cursor:pointer;}
+  .opt:active{transform:scale(.98);}
+  .opt.correct{border-color:var(--mint); background:rgba(87,230,195,.18);}
+  .opt.wrong{border-color:var(--pink); background:rgba(255,93,158,.16);}
+  .opt.dim{opacity:.5;}
+  .between{text-align:center;}
+  .score-big{font-size:44px; margin:8px 0;}
+  .pass{color:var(--yellow); font-weight:800; margin:14px 0; font-size:17px;}
+  .board-item{display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px;
+    background:var(--surface2); border:1px solid var(--line); margin-bottom:8px;}
+  .board-item .rk{font-size:20px; width:34px; text-align:center;}
+  .board-item .nm{flex:1; font-size:16px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .board-item .sc{color:var(--mint); font-weight:800;}
+  .board-item.first{background:linear-gradient(135deg,rgba(255,209,102,.25),rgba(255,93,158,.18)); border-color:var(--yellow);}
+  .cert{margin:16px 0; padding:20px 16px; border-radius:18px; text-align:center;
+    background:linear-gradient(135deg,#3a2b16,#3a1e2e); border:2px solid var(--yellow);}
+  .cert .ttl{color:var(--yellow); font-size:15px; letter-spacing:1px;}
+  .cert .who{font-size:28px; margin:8px 0;}
+  .cert .desc{color:var(--muted); font-size:13px; line-height:1.5;}
+  .small{font-size:12px; color:var(--muted); text-align:center; margin-top:14px;}
+</style>
+</head>
+<body>
+  <div class="card">
+    <!-- 홈 -->
+    <div id="home">
+      <h1>🎂 소원 퀴즈</h1>
+      <div class="sub">누가 소원이를 제일 잘 알까?<br>닉네임 넣고 시작 → 다 풀면 다음 사람에게 폰을 넘겨줘!</div>
+      <input type="text" id="nick" placeholder="닉네임" maxlength="12" autocomplete="off">
+      <button class="btn" id="startBtn">시작하기</button>
+      <div id="already" class="small"></div>
+      <button class="btn ghost hidden" id="toBoardBtn" style="margin-top:14px">🏆 지금 랭킹 보기</button>
+      <button class="btn ghost hidden" id="resetBtn" style="margin-top:8px">🔄 새 게임 (기록 초기화)</button>
+    </div>
+
+    <!-- 퀴즈 -->
+    <div id="quiz" class="hidden">
+      <div class="prog"><span id="whoTurn"></span><span id="qnum"></span></div>
+      <div class="q" id="qtext"></div>
+      <div id="opts"></div>
+    </div>
+
+    <!-- 중간 결과 -->
+    <div id="between" class="between hidden">
+      <h1 id="bScore">🎉</h1>
+      <div class="score-big" id="bScoreNum"></div>
+      <div class="pass">📱 다음 사람에게 폰을 넘겨주세요!</div>
+      <button class="btn" id="nextPlayerBtn">다음 사람 하기</button>
+      <button class="btn ghost" id="seeBoardBtn">🏆 랭킹 보기</button>
+    </div>
+
+    <!-- 랭킹 -->
+    <div id="board" class="hidden">
+      <h1>🏆 랭킹</h1>
+      <div class="sub">소원이를 제일 잘 아는 사람은?</div>
+      <div id="boardList"></div>
+      <div id="certBox"></div>
+      <button class="btn ghost" id="againBtn" style="margin-top:14px">➕ 더 참가하기</button>
+      <button class="btn ghost" id="resetBtn2" style="margin-top:8px">🔄 새 게임 (기록 초기화)</button>
+    </div>
+  </div>
+
+<script>
+/* ===== 문제 (⚠️ 예시 — 소원이가 진짜 문제/정답 알려주면 교체) ===== */
+const QUESTIONS = [
+  { q:"소원이의 MBTI는?", opts:["ENFP","INFJ","ISTP","ESTJ"], a:0 },
+  { q:"소원이가 제일 좋아하는 음식은?", opts:["떡볶이","초밥","마라탕","치킨"], a:2 },
+  { q:"소원이 최애 캐릭터는?", opts:["피카츄","괴도키드","명탐정 코난","짱구"], a:1 },
+  { q:"소원이가 요즘 제일 많이 하는 것은?", opts:["넷플릭스","게임","산책","코딩"], a:0 },
+  { q:"소원이 이상형은?", opts:["다정한 사람","웃긴 사람","능력있는 사람","키 큰 사람"], a:1 },
+  { q:"소원이가 가고 싶은 여행지는?", opts:["일본","유럽","제주","하와이"], a:1 },
+];
+const OWNER = "소원";
+
+const $ = s=>document.querySelector(s);
+const screens = { home:$('#home'), quiz:$('#quiz'), between:$('#between'), board:$('#board') };
+function show(name){ for(const k in screens) screens[k].classList.toggle('hidden', k!==name); }
+const KEY='sowon_quiz_v1';
+const load=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'[]'); }catch(e){ return []; } };
+const save=a=>{ try{ localStorage.setItem(KEY, JSON.stringify(a)); }catch(e){} };
+
+let cur={ name:'', idx:0, score:0, start:0, answered:false };
+
+function refreshHome(){
+  const players=load();
+  $('#already').textContent = players.length ? `지금까지 ${players.length}명 참가 (${players.map(p=>p.name).join(', ')})` : '';
+  $('#toBoardBtn').classList.toggle('hidden', players.length===0);
+  $('#resetBtn').classList.toggle('hidden', players.length===0);
+}
+
+$('#startBtn').onclick = ()=>{
+  const n = $('#nick').value.trim();
+  if(!n){ $('#nick').focus(); return; }
+  cur={ name:n, idx:0, score:0, start:Date.now(), answered:false };
+  show('quiz'); renderQ();
+};
+$('#toBoardBtn').onclick = ()=>{ renderBoard(); show('board'); };
+$('#resetBtn').onclick = $('#resetBtn2') ? ()=>{ if(confirm('모든 기록을 지울까요?')){ save([]); refreshHome(); show('home'); } } : null;
+$('#resetBtn2').onclick = ()=>{ if(confirm('모든 기록을 지울까요?')){ save([]); refreshHome(); show('home'); } };
+$('#resetBtn').onclick = ()=>{ if(confirm('모든 기록을 지울까요?')){ save([]); refreshHome(); show('home'); } };
+
+function renderQ(){
+  const item = QUESTIONS[cur.idx];
+  cur.answered=false;
+  $('#whoTurn').textContent = `${cur.name} 님`;
+  $('#qnum').textContent = `${cur.idx+1} / ${QUESTIONS.length}`;
+  $('#qtext').textContent = item.q;
+  const box=$('#opts'); box.innerHTML='';
+  item.opts.forEach((o,i)=>{
+    const b=document.createElement('button'); b.className='opt'; b.textContent=o;
+    b.onclick=()=>pick(i,b); box.appendChild(b);
+  });
+}
+function pick(i,btn){
+  if(cur.answered) return; cur.answered=true;
+  const item=QUESTIONS[cur.idx];
+  const btns=[...document.querySelectorAll('#opts .opt')];
+  btns.forEach((b,bi)=>{ if(bi===item.a) b.classList.add('correct'); else if(bi===i) b.classList.add('wrong'); else b.classList.add('dim'); });
+  if(i===item.a) cur.score++;
+  setTimeout(()=>{
+    cur.idx++;
+    if(cur.idx>=QUESTIONS.length) finishPlayer();
+    else renderQ();
+  }, 750);
+}
+function finishPlayer(){
+  const timeMs = Date.now()-cur.start;
+  const players=load(); players.push({ name:cur.name, score:cur.score, timeMs }); save(players);
+  $('#bScore').textContent = cur.score===QUESTIONS.length ? '🏆 만점!' : (cur.score>=QUESTIONS.length/2 ? '👏 잘했어!' : '🤔 음...');
+  $('#bScoreNum').textContent = `${cur.score} / ${QUESTIONS.length} 정답`;
+  show('between');
+}
+$('#nextPlayerBtn').onclick = ()=>{ $('#nick').value=''; refreshHome(); show('home'); $('#nick').focus(); };
+$('#seeBoardBtn').onclick = ()=>{ renderBoard(); show('board'); };
+$('#againBtn').onclick = ()=>{ $('#nick').value=''; refreshHome(); show('home'); };
+
+function renderBoard(){
+  const players=load().slice().sort((a,b)=> b.score-a.score || a.timeMs-b.timeMs);
+  const medals=['🥇','🥈','🥉'];
+  const list=$('#boardList'); list.innerHTML='';
+  players.forEach((p,i)=>{
+    const d=document.createElement('div'); d.className='board-item'+(i===0?' first':'');
+    d.innerHTML=`<span class="rk">${medals[i]||(i+1)}</span><span class="nm">${escapeHtml(p.name)}</span><span class="sc">${p.score}/${QUESTIONS.length}</span>`;
+    list.appendChild(d);
+  });
+  const cert=$('#certBox');
+  if(players.length){
+    const w=players[0];
+    cert.innerHTML=`<div class="cert"><div class="ttl">✦ 공식 인증서 ✦</div>
+      <div class="who">${escapeHtml(w.name)}</div>
+      <div class="desc">위 사람은 「${OWNER} 공식 절친 1위 🏆」<br>임을 인증합니다.<br>(${w.score}/${QUESTIONS.length} 정답)</div></div>`;
+  } else cert.innerHTML='';
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+refreshHome();
+</script>
+</body>
+</html>
