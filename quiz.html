@@ -468,9 +468,19 @@ input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-siz
       window.dispatchEvent(new Event('quizdb-error')); console.warn(e);
     };
 
+    /* 서버에 실제로 반영됐는지 추적 — 로컬 캐시만 보고 '참가 완료'로 속지 않게 */
+    const syncFlag = (s)=>{
+      const pending = s.metadata.fromCache || s.metadata.hasPendingWrites;
+      if(window.__unsynced !== pending){
+        window.__unsynced = pending;
+        window.dispatchEvent(new Event('quizdb-sync'));
+      }
+    };
+    const META = { includeMetadataChanges:true };
+
     window.QuizDB = {
       subscribeRoom:    (cb)=> onSnapshot(room,    s=> cb(s.exists() ? s.data() : null), onErr),
-      subscribePlayers: (cb)=> onSnapshot(players, s=> cb(listAll(s)), onErr),
+      subscribePlayers: (cb)=> onSnapshot(players, META, s=>{ syncFlag(s); cb(listAll(s)); }, onErr),
       subscribeAnswers: (cb)=> onSnapshot(answers, s=> cb(listAll(s)), onErr),
 
       setRoom: (obj)=> setDoc(room, obj, { merge:true }),
@@ -595,9 +605,15 @@ let lastConfettiRound = null;
    DB 연결
    ============================================================ */
 function setStatus(state,txt){ $('#status').className='status'+(state?' '+state:''); $('#statusTxt').textContent=txt; }
+/* 서버 반영 여부에 따라 상태 배지를 갱신 — 캐시만 보고 참가된 줄 알면 답이 집계되지 않는다 */
+function refreshStatus(){
+  if(window.__unsynced) setStatus('err','⚠️ 서버 반영 안 됨 — 연결 확인 중');
+  else setStatus(IS_HOST?'host':'ok', IS_HOST ? '🎤 호스트 모드' : '실시간 연결됨');
+}
+window.addEventListener('quizdb-sync', refreshStatus);
 function initDB(){
   if(!window.QuizDB) return;
-  setStatus(IS_HOST?'host':'ok', IS_HOST ? '🎤 호스트 모드' : '실시간 연결됨');
+  refreshStatus();
   $('#joinBtn').disabled=false;
   // 호스트는 실시간 연결을 기다리는 동안에도 참가 화면이 아니라 콘솔을 바로 보여준다
   if(IS_HOST){ renderHostLobby(); show('hostLobby'); }
