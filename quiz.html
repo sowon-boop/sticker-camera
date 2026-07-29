@@ -682,7 +682,8 @@ $('#hostResetBtn').onclick = hostReset;
 /* 답 선택 */
 async function pick(i){
   if(!room || room.phase!=='q') return;
-  if(myAnswer(room.qIdx)) return;
+  const cur = myAnswer(room.qIdx);
+  if(cur && cur.choice===i) return;              // 같은 걸 다시 누른 경우만 무시
   const ms = Math.max(0, Date.now() - (room.startedAt||Date.now()));
   try{ await window.QuizDB.answer(room.qIdx, myId, myName, i, ms); }
   catch(e){ alert('전송 실패 — 다시 눌러줘'); }
@@ -757,11 +758,11 @@ function renderQ(isHost){
       const b=document.createElement('button');
       let cls='opt';
       if(isHost){ cls+=' static'+(i===item.a?' correct':''); }
-      else if(mine){ cls+=' static'+(mine.choice===i?' picked':' dim'); }
+      else if(mine && mine.choice===i){ cls+=' picked'; }   // 고른 것 표시하되 다른 보기는 계속 누를 수 있다
       b.className=cls;
       b.innerHTML=`<span class="tag">${letter(i)}</span><span class="txt">${esc(o)}</span>`
                 + (isHost && i===item.a ? '<span class="mark">정답</span>' : '');
-      if(!isHost && !mine) b.onclick=()=>pick(i);
+      if(!isHost) b.onclick=()=>pick(i);
       box.appendChild(b);
     });
   }
@@ -780,7 +781,7 @@ function renderQ(isHost){
     foot.innerHTML = `
       <div class="waiting">
         <div class="spinner"></div>
-        <div class="sub" style="margin:0"><b>${letter(mine.choice)}</b> 골랐어!<br><span class="dots3">다른 사람 기다리는 중</span></div>
+        <div class="sub" style="margin:0"><b>${letter(mine.choice)}</b> 골랐어! <span style="font-size:13px;color:#B8A88F">(다시 눌러서 바꿀 수 있어)</span><br><span class="dots3">다른 사람 기다리는 중</span></div>
         <div class="count-big" style="margin-top:10px"><b>${got.length}</b> / ${players.length} 명 완료</div>
         <div class="plist" id="qWaitList"></div>
       </div>`;
