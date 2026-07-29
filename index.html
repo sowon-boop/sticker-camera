@@ -1094,7 +1094,7 @@ const KID = (()=>{
       const fileset = await FilesetResolver.forVisionTasks(WASM_URL);
       landmarker = await FaceLandmarker.createFromOptions(fileset, {
         baseOptions: { modelAssetPath: MODEL_URL, delegate: "GPU" },
-        runningMode: "VIDEO", numFaces: 5,
+        runningMode: "VIDEO", numFaces: 10,
       });
     }catch(err){ loadFailed=true; console.warn('[괴도키드] 모델 로드 실패 — AR 없이 계속', err); }
     finally{ loading=false; kidBtn && kidBtn.classList.remove('loading'); }
@@ -1179,24 +1179,33 @@ const KID = (()=>{
     ctx.save(); ctx.translate(fx,fy); ctx.rotate(f.roll);
     ctx.drawImage(pikaImg, -w*PIKA_ANCHOR_X, -h*PIKA_ANCHOR_Y, w, h); ctx.restore();
   }
+  // 사람마다(얼굴 위치 기준) 다른 색 팔레트 — 단체사진에서 알록달록하게
+  const PARTY_PAL=[
+    {body:'#FF5D9E', pom:'#FFF3B0', st:['#FFD166','#4FA8FF','#5DDA6B']},
+    {body:'#4FA8FF', pom:'#FFE24A', st:['#FF7EC0','#FFF3B0','#5DDA6B']},
+    {body:'#5DDA6B', pom:'#FF7EC0', st:['#FFE24A','#4FA8FF','#FF5D9E']},
+    {body:'#FFB03A', pom:'#B06BFF', st:['#5DDA6B','#FF5D9E','#4FA8FF']},
+    {body:'#B06BFF', pom:'#66E0D0', st:['#FFE24A','#FF7EC0','#5DDA6B']},
+    {body:'#FF5D5D', pom:'#FFF3B0', st:['#FFD166','#66E0D0','#B06BFF']},
+  ];
   function drawPartyHat(ctx, cw, ch, lm){
     if(!lm) return;
     const f=faceFrame(lm,cw,ch);
+    const pal=PARTY_PAL[Math.abs(Math.round(f.cx/90))%PARTY_PAL.length];   // 위치별 색(사람마다 다름, 정지 시 안정)
     const up={x:Math.sin(f.roll), y:-Math.cos(f.roll)};
     const baseW=f.interI*1.7, height=f.interI*2.4, lift=f.interI*1.05;
     const bx=f.cx+up.x*lift, by=f.cy+up.y*lift;   // 밑변 중심(머리 위)
     ctx.save(); ctx.translate(bx,by); ctx.rotate(f.roll);
     const bl={x:-baseW/2,y:0}, br={x:baseW/2,y:0}, apex={x:0,y:-height};
     ctx.beginPath(); ctx.moveTo(bl.x,bl.y); ctx.lineTo(apex.x,apex.y); ctx.lineTo(br.x,br.y); ctx.closePath();
-    ctx.fillStyle='#FF5D9E'; ctx.fill();
+    ctx.fillStyle=pal.body; ctx.fill();
     ctx.save(); ctx.clip();   // 줄무늬를 콘 안에만
-    const cols=['#FFD166','#4FA8FF','#5DDA6B'];
     for(let i=1;i<=4;i++){ const ww=baseW*(1-i/5), yy=-height*(i/5);
-      ctx.fillStyle=cols[(i-1)%cols.length]; ctx.fillRect(-ww/2, yy-height*0.045, ww, height*0.055); }
+      ctx.fillStyle=pal.st[(i-1)%pal.st.length]; ctx.fillRect(-ww/2, yy-height*0.045, ww, height*0.055); }
     ctx.restore();
     ctx.lineWidth=Math.max(2,f.interI*0.05); ctx.strokeStyle='#3a2a4a'; ctx.lineJoin='round';
     ctx.beginPath(); ctx.moveTo(bl.x,bl.y); ctx.lineTo(apex.x,apex.y); ctx.lineTo(br.x,br.y); ctx.closePath(); ctx.stroke();
-    ctx.fillStyle='#FFF3B0'; ctx.beginPath(); ctx.arc(apex.x,apex.y,baseW*0.15,0,6.28); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=pal.pom; ctx.beginPath(); ctx.arc(apex.x,apex.y,baseW*0.15,0,6.28); ctx.fill(); ctx.stroke();
     ctx.restore();
   }
   function drawAll(ctx, cw, ch, lm){
