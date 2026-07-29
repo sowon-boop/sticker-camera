@@ -4,113 +4,448 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#FFC44D">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
-<title>소원 퀴즈 🎂</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<title>신소원 퀴즈 🎂 우정 테스트</title>
 <style>
-  :root{
-    --cream:#FFFDF3; --card:#FFFFFF; --ink:#7A6533; --muted:#C7B888; --line:#F4ECD6;
-    --coral:#FFCF45; --coral2:#FFB03A; --lav:#C6BBF3; --mint:#8FE3C6; --gold:#F0B429; --wrong:#FF8FA0;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  body{margin:0; font-family:"Jua",system-ui,sans-serif;
-    background:#FFF3CC;
-    color:var(--ink); min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px;}
-  .card{width:100%; max-width:440px; background:var(--card); border-radius:30px; padding:26px 22px 30px;
-    box-shadow:0 20px 44px rgba(255,185,60,.26), 0 4px 14px rgba(255,200,90,.16);}
-  h1{font-size:29px; margin:.15em 0 .1em; text-align:center; color:#6b5220; letter-spacing:-.5px;}
-  .sub{color:var(--muted); text-align:center; font-size:14.5px; margin-bottom:20px; line-height:1.6;}
-  input[type=text]{width:100%; padding:15px 16px; border-radius:16px; border:2px solid var(--line);
-    background:#FFFBFC; color:var(--ink); font-size:17px; font-family:inherit; text-align:center; outline:none; transition:border-color .15s;}
-  input[type=text]:focus{border-color:var(--coral);}
-  input::placeholder{color:#D7C7D0;}
-  .btn{display:block; width:100%; margin-top:12px; padding:16px; border:none; border-radius:18px; cursor:pointer;
-    font-family:inherit; font-size:17.5px; font-weight:800; color:#fff; letter-spacing:.3px;
-    background:var(--coral); box-shadow:0 8px 18px rgba(255,180,50,.4); transition:transform .1s, box-shadow .1s;}
-  .btn:active{transform:translateY(1px) scale(.99); box-shadow:0 4px 10px rgba(255,137,169,.3);}
-  .btn:disabled{opacity:.5; box-shadow:none;}
-  .btn.ghost{background:#FFF6DE; color:#8a7635; box-shadow:none; border:2px solid var(--line);}
-  .hidden{display:none;}
-  .prog{display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:10px; font-family:"Gaegu",sans-serif;}
-  .q{font-size:21px; line-height:1.45; margin:6px 0 20px; min-height:58px; color:#5f4a56;}
-  .opt{display:block; width:100%; text-align:left; margin-bottom:11px; padding:15px 17px; border-radius:16px;
-    border:2px solid var(--line); background:#FFFBFC; color:var(--ink); font-size:16.5px; font-family:inherit; cursor:pointer; transition:transform .08s;}
-  .opt:active{transform:scale(.98);}
-  .opt.correct{border-color:var(--mint); background:#EAFBF4; color:#3aa588;}
-  .opt.wrong{border-color:var(--wrong); background:#FFF0F3; color:#d76a86;}
-  .opt.dim{opacity:.45;}
-  .between{text-align:center;}
-  .score-big{font-size:46px; margin:6px 0; color:#E8A21C;}
-  .pass{color:#c98a5a; font-weight:800; margin:14px 0; font-size:16.5px; line-height:1.6;}
-  .board-item{display:flex; align-items:center; gap:11px; padding:13px 15px; border-radius:16px;
-    background:#FFFBFC; border:2px solid var(--line); margin-bottom:9px;}
-  .board-item .rk{font-size:21px; width:34px; text-align:center;}
-  .board-item .nm{flex:1; font-size:16.5px; font-weight:800; color:#5f4a56; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .board-item .sc{color:#3aa588; font-weight:800;}
-  .board-item.first{background:#FFF1CE; border-color:var(--gold);}
-  .cert{margin:18px 0; padding:22px 16px; border-radius:22px; text-align:center;
-    background:#FFF5D6; border:2px dashed var(--gold);}
-  .cert .ttl{color:#d9a441; font-size:15px; letter-spacing:2px; font-weight:800;}
-  .cert .who{font-size:30px; margin:10px 0; color:#e07a97;}
-  .cert .desc{color:#a98f9a; font-size:13.5px; line-height:1.6;}
-  .small{font-size:12.5px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.6;}
-  .status{font-size:12px; text-align:center; margin-bottom:12px; color:var(--muted);}
-  .status .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#D9C9D2; margin-right:6px; vertical-align:middle;}
-  .status.ok .dot{background:var(--mint);} .status.err .dot{background:var(--wrong);}
-  .live{font-size:11.5px; color:#3aa588; text-align:center; margin-top:8px;}
-  .deco{text-align:center; font-size:26px; margin-bottom:2px; letter-spacing:4px;}
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  /* 배경 단색 — 여기 값만 바꾸면 전체 배경이 바뀜 */
+  --bg1:#FFC44D;
+  --card:#FFFFFF;
+  --ink:#5C4B3A; --ink2:#8B7860; --muted:#B8A88F;
+  --line:#F5EBDA;
+
+  --yellow:#FFC93C; --yellow-d:#F5A623;
+  --pink:#FF9FB6; --pink-d:#F2718E;
+  --mint:#7FDDC0; --mint-d:#3FB795;
+  --lav:#B9AAF5;
+  --gold:#F0B429;
+
+  --r-lg:34px; --r-md:20px; --r-sm:14px;
+  --sh-card:0 22px 50px rgba(120,78,10,.22), 0 6px 16px rgba(120,78,10,.12);
+  --sh-btn:0 8px 0 var(--yellow-d), 0 14px 24px rgba(245,166,35,.30);
+  --sh-btn-pink:0 8px 0 var(--pink-d), 0 14px 24px rgba(242,113,142,.28);
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  margin:0; padding:24px 16px;
+  font-family:"Gowun Dodum",system-ui,sans-serif;
+  color:var(--ink);
+  min-height:100dvh;
+  display:grid; place-items:center;
+  background:var(--bg1);
+  overflow-x:hidden;
+}
+
+/* 배경 이모지 패턴 (일정한 격자, 지그재그) */
+.bgdeco{position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;}
+.bgdeco i{
+  position:absolute; font-style:normal; font-size:24px; line-height:1;
+  opacity:.3; transform:rotate(-12deg);
+  animation:float 6s ease-in-out infinite;
+}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-12deg);}50%{transform:translateY(-8px) rotate(4deg);}}
+@media (max-width:420px){ .bgdeco i{font-size:20px; opacity:.26;} }
+
+/* ============================================================
+   CARD SHELL
+   ============================================================ */
+.wrap{position:relative; z-index:1; width:100%; max-width:430px; margin:auto;}
+.card{
+  position:relative;
+  background:var(--card);
+  border-radius:var(--r-lg);
+  padding:22px 20px 26px;
+  box-shadow:var(--sh-card);
+  animation:pop .5s cubic-bezier(.2,1.3,.4,1) both;
+}
+.card::before{
+  content:""; position:absolute; top:-11px; left:50%; transform:translateX(-50%) rotate(-1.5deg);
+  width:104px; height:22px; border-radius:4px;
+  background:repeating-linear-gradient(45deg,rgba(255,201,60,.55) 0 7px,rgba(255,159,182,.55) 7px 14px);
+  box-shadow:0 3px 8px rgba(0,0,0,.06);
+}
+@keyframes pop{from{opacity:0; transform:translateY(18px) scale(.96);}to{opacity:1; transform:none;}}
+
+h1{font-family:"Jua",sans-serif; font-size:30px; margin:.1em 0 .12em; text-align:center; color:#4E3D2B; letter-spacing:-.6px; line-height:1.25;}
+h2{font-family:"Jua",sans-serif; font-size:20px; margin:.1em 0 .3em; text-align:center; color:#4E3D2B;}
+.sub{color:var(--ink2); text-align:center; font-size:14.5px; margin:0 0 20px; line-height:1.8;}
+.tagline{
+  width:fit-content; margin:4px auto 8px; padding:5px 15px; border-radius:999px;
+  background:#FFF3F6; border:2px solid #FFD9E3;
+  font-family:"Gaegu",sans-serif; font-weight:700; font-size:14px; color:var(--pink-d);
+  letter-spacing:1px;
+}
+.hidden{display:none !important;}
+.screen{animation:fade .32s ease both;}
+@keyframes fade{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:none;}}
+
+.status{
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  width:fit-content; margin:2px auto 12px; padding:5px 13px;
+  border-radius:999px; background:#FFF8E8; border:1.5px solid #F6E9C8;
+  font-family:"Gaegu",sans-serif; font-weight:700; font-size:13px; color:#A5905F;
+}
+.status .dot{width:7px; height:7px; border-radius:50%; background:#DFD2B6; animation:blink 1.2s infinite;}
+.status.ok{background:#EBFBF5; border-color:#CBEFE3; color:#3FA98A;}
+.status.ok .dot{background:var(--mint-d); animation:none;}
+.status.err{background:#FFF0F3; border-color:#FFD7E0; color:#E2718D;}
+.status.err .dot{background:var(--pink-d); animation:none;}
+.status.host{background:#F4F0FF; border-color:#DED4FB; color:#7A66C9;}
+.status.host .dot{background:var(--lav); animation:none;}
+@keyframes blink{0%,100%{opacity:.35;}50%{opacity:1;}}
+
+.deco{text-align:center; font-size:30px; letter-spacing:6px; margin-bottom:2px;}
+.deco span{display:inline-block; animation:bob 2.4s ease-in-out infinite;}
+.deco span:nth-child(2){animation-delay:.3s;}
+.deco span:nth-child(3){animation-delay:.6s;}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-7px) rotate(-8deg);}}
+
+/* ============================================================
+   FORM / BUTTONS
+   ============================================================ */
+.field{position:relative; margin-top:6px;}
+.field label{
+  position:absolute; top:-9px; left:16px; padding:0 8px; background:#fff;
+  font-family:"Gaegu",sans-serif; font-weight:700; font-size:13px; color:var(--pink-d);
+}
+input[type=text]{
+  width:100%; padding:17px 16px; border-radius:var(--r-md);
+  border:2.5px solid var(--line); background:#FFFCF6;
+  color:var(--ink); font-size:17px; font-family:"Jua",sans-serif; text-align:center;
+  outline:none; transition:border-color .18s, box-shadow .18s, background .18s;
+}
+input[type=text]:focus{border-color:var(--pink); background:#fff; box-shadow:0 0 0 5px rgba(255,159,182,.16);}
+input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-size:15px;}
+
+.btn{
+  display:block; width:100%; margin-top:16px; padding:17px 16px;
+  border:none; border-radius:var(--r-md); cursor:pointer;
+  font-family:"Jua",sans-serif; font-size:18px; color:#fff; letter-spacing:.2px;
+  background:linear-gradient(180deg,#FFD764,var(--yellow));
+  box-shadow:var(--sh-btn);
+  transition:transform .09s ease, box-shadow .09s ease;
+}
+.btn:active{transform:translateY(6px); box-shadow:0 2px 0 var(--yellow-d), 0 6px 12px rgba(245,166,35,.25);}
+.btn:disabled{opacity:.45; box-shadow:0 8px 0 #E8DCC4; cursor:not-allowed;}
+.btn.pink{background:linear-gradient(180deg,#FFB4C6,var(--pink)); box-shadow:var(--sh-btn-pink);}
+.btn.pink:active{box-shadow:0 2px 0 var(--pink-d), 0 6px 12px rgba(242,113,142,.25);}
+.btn.lav{background:linear-gradient(180deg,#CDC1FA,#A996F0); box-shadow:0 8px 0 #8674D4, 0 14px 24px rgba(134,116,212,.28);}
+.btn.lav:active{box-shadow:0 2px 0 #8674D4;}
+.btn.ghost{
+  background:#FFFBF1; color:#9A8664; border:2.5px solid var(--line);
+  box-shadow:0 5px 0 #F0E4CE; font-size:16px; padding:14px;
+}
+.btn.ghost:active{transform:translateY(4px); box-shadow:0 1px 0 #F0E4CE;}
+.btn.tiny{font-size:14px; padding:11px; margin-top:8px; box-shadow:0 4px 0 #F0E4CE;}
+
+.small{font-size:12.5px; color:var(--muted); text-align:center; margin-top:14px; line-height:1.75;}
+.linkish{
+  display:block; width:100%; margin-top:14px; background:none; border:none; cursor:pointer;
+  font-family:"Gaegu",sans-serif; font-weight:700; font-size:13px; color:#C3B393; text-decoration:underline;
+}
+
+.av{
+  width:28px; height:28px; border-radius:50%; display:grid; place-items:center;
+  font-family:"Jua",sans-serif; font-size:12px; color:#fff; border:2px solid #fff;
+  box-shadow:0 2px 5px rgba(0,0,0,.08); flex:0 0 auto;
+}
+.avatars{display:flex; justify-content:center; flex-wrap:wrap; gap:5px; margin-top:8px;}
+
+/* ============================================================
+   LOBBY
+   ============================================================ */
+.lobbybox{
+  margin-top:14px; padding:16px 14px; border-radius:var(--r-sm);
+  background:#FFF9EC; border:2px dashed #F1DFB8; text-align:center;
+}
+.lobbybox .cnt{font-family:"Jua",sans-serif; font-size:16px; color:#A5905F;}
+.plist{display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin-top:12px;}
+.pchip{
+  display:flex; align-items:center; gap:6px; padding:5px 11px 5px 5px;
+  background:#fff; border:2px solid var(--line); border-radius:999px;
+  font-family:"Jua",sans-serif; font-size:13.5px; color:var(--ink);
+  animation:pop .35s cubic-bezier(.2,1.3,.4,1) both;
+}
+.pchip .av{width:21px; height:21px; font-size:11px; border-width:1.5px;}
+.pchip.done{border-color:var(--mint); background:#F1FCF7;}
+.pchip.me{border-color:var(--pink); background:#FFF6F8;}
+
+.waiting{text-align:center; padding:6px 0 2px;}
+.spinner{
+  width:44px; height:44px; margin:8px auto 12px; border-radius:50%;
+  border:5px solid #FBEBCF; border-top-color:var(--yellow);
+  animation:spin 1s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.dots3::after{content:"…"; animation:dots 1.4s steps(4,end) infinite; }
+@keyframes dots{0%{content:"";}25%{content:"·";}50%{content:"··";}75%{content:"···";}}
+
+/* ============================================================
+   QUIZ
+   ============================================================ */
+.qhead{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; gap:10px;}
+.who{
+  display:flex; align-items:center; gap:7px;
+  font-family:"Jua",sans-serif; font-size:14px; color:var(--ink2);
+  background:#FFF6F8; border:1.5px solid #FFE3EA; padding:5px 11px 5px 6px; border-radius:999px;
+}
+.who .av{width:22px; height:22px; font-size:11px; border-width:1.5px;}
+.qcount{font-family:"Jua",sans-serif; font-size:14px; color:var(--pink-d);}
+.qcount b{font-size:19px;}
+
+.bar{height:11px; border-radius:99px; background:#FBF2E2; overflow:hidden; margin-bottom:16px;}
+.bar>div{
+  height:100%; width:0%; border-radius:99px;
+  background:linear-gradient(90deg,var(--yellow),var(--pink));
+  transition:width .45s cubic-bezier(.3,1.2,.4,1);
+}
+
+.q{
+  font-family:"Jua",sans-serif; font-size:22px; line-height:1.5;
+  margin:4px 0 18px; min-height:62px; color:#4E3D2B; text-align:center;
+  animation:qin .35s cubic-bezier(.2,1.2,.4,1) both;
+}
+@keyframes qin{from{opacity:0; transform:translateY(10px) scale(.97);}to{opacity:1; transform:none;}}
+
+.opt{
+  position:relative; display:flex; align-items:center; gap:12px;
+  width:100%; text-align:left; margin-bottom:10px; padding:15px 16px;
+  border-radius:var(--r-md); border:2.5px solid var(--line); background:#FFFCF6;
+  color:var(--ink); font-size:16.5px; font-family:"Gowun Dodum",sans-serif; cursor:pointer;
+  box-shadow:0 4px 0 #F4E9D6;
+  transition:transform .1s, box-shadow .1s, border-color .18s, background .18s;
+  animation:optin .3s ease both;
+}
+.opt:nth-child(1){animation-delay:.02s} .opt:nth-child(2){animation-delay:.07s}
+.opt:nth-child(3){animation-delay:.12s} .opt:nth-child(4){animation-delay:.17s}
+.opt:nth-child(5){animation-delay:.22s} .opt:nth-child(6){animation-delay:.27s}
+@keyframes optin{from{opacity:0; transform:translateX(-10px);}to{opacity:1; transform:none;}}
+.opt .tag{
+  flex:0 0 30px; height:30px; border-radius:11px; display:grid; place-items:center;
+  background:#FFF2D9; color:#C79A3C; font-family:"Jua",sans-serif; font-size:14px; transition:.18s;
+}
+.opt .txt{flex:1;}
+.opt:active{transform:translateY(4px); box-shadow:0 1px 0 #F4E9D6;}
+.opt.picked{border-color:var(--lav); background:#F6F2FF; box-shadow:0 4px 0 #DCD1FA;}
+.opt.picked .tag{background:var(--lav); color:#fff;}
+.opt.correct{border-color:var(--mint); background:#EDFBF5; color:var(--mint-d); box-shadow:0 4px 0 #C9EFE2; animation:bounce .45s;}
+.opt.correct .tag{background:var(--mint); color:#fff;}
+.opt.wrong{border-color:var(--pink); background:#FFF2F5; color:var(--pink-d); box-shadow:0 4px 0 #FFDCE4;}
+.opt.wrong .tag{background:var(--pink); color:#fff;}
+.opt.dim{opacity:.5; box-shadow:none;}
+.opt.static{cursor:default;}
+.opt .chosen{display:flex; gap:3px; flex-wrap:wrap; justify-content:flex-end; max-width:46%;}
+.opt .chosen .av{width:23px; height:23px; font-size:10.5px; border-width:1.5px;}
+.opt .mark{font-family:"Jua",sans-serif; font-size:13px; flex:0 0 auto;}
+@keyframes bounce{0%{transform:scale(1)}35%{transform:scale(1.04)}70%{transform:scale(.99)}100%{transform:scale(1)}}
+
+.verdict{
+  text-align:center; font-family:"Jua",sans-serif; font-size:19px; margin-top:10px;
+  animation:vin .4s cubic-bezier(.2,1.4,.4,1);
+}
+.verdict.good{color:var(--mint-d);} .verdict.bad{color:var(--pink-d);}
+@keyframes vin{from{transform:scale(.6) translateY(6px); opacity:0;}to{transform:none; opacity:1;}}
+
+.answerpill{
+  width:fit-content; margin:0 auto 14px; padding:6px 16px; border-radius:999px;
+  background:#EDFBF5; border:2px solid #C9EFE2;
+  font-family:"Jua",sans-serif; font-size:15px; color:var(--mint-d);
+}
+
+/* ============================================================
+   HOST BAR
+   ============================================================ */
+.hostbar{
+  margin-top:18px; padding-top:16px; border-top:2px dashed #EFE3CB;
+}
+.hostbar .lbl{
+  font-family:"Gaegu",sans-serif; font-weight:700; font-size:13px; color:#9B87BF;
+  text-align:center; margin-bottom:8px;
+}
+.count-big{
+  font-family:"Jua",sans-serif; text-align:center; font-size:15px; color:var(--ink2); margin-bottom:4px;
+}
+.count-big b{font-size:24px; color:var(--yellow-d);}
+
+/* ============================================================
+   RESULT CARD
+   ============================================================ */
+.result-card{
+  position:relative; overflow:hidden;
+  margin:6px 0 4px; padding:26px 20px 24px; border-radius:28px; text-align:center;
+  background:linear-gradient(165deg,#FFFDF5 0%,#FFF6E2 48%,#FFEDF1 100%);
+  border:2.5px solid #FBE7C4;
+  box-shadow:inset 0 0 0 6px rgba(255,255,255,.7);
+}
+.rc-badge{
+  display:inline-block; padding:5px 14px; border-radius:999px;
+  background:#fff; border:2px solid var(--gold);
+  font-family:"Gaegu",sans-serif; font-weight:700; font-size:13px; color:#C99320; letter-spacing:1.5px;
+}
+.rc-emoji{font-size:56px; line-height:1.2; margin:12px 0 2px; animation:bob 2.6s ease-in-out infinite;}
+.rc-title{font-family:"Jua",sans-serif; font-size:25px; color:#4E3D2B; margin:6px 0 2px; line-height:1.35;}
+.rc-name{font-family:"Jua",sans-serif; font-size:16px; color:var(--pink-d); margin-bottom:14px;}
+
+.ring{position:relative; width:132px; height:132px; margin:8px auto 6px;}
+.ring svg{transform:rotate(-90deg); display:block;}
+.ring .val{position:absolute; inset:0; display:grid; place-items:center; font-family:"Jua",sans-serif; line-height:1;}
+.ring .val b{font-size:38px; color:var(--yellow-d);}
+.ring .val small{font-size:13px; color:var(--muted); margin-top:5px;}
+
+.rc-msg{
+  font-size:14.5px; color:var(--ink2); line-height:1.75; margin-top:10px;
+  padding-top:12px; border-top:1.5px dashed #F0DCB8;
+}
+.rc-foot{font-family:"Gaegu",sans-serif; font-weight:700; font-size:12.5px; color:var(--muted); margin-top:12px; letter-spacing:.5px;}
+
+.confetti{position:fixed; inset:0; pointer-events:none; z-index:60; overflow:hidden;}
+.confetti i{position:absolute; top:-20px; width:9px; height:14px; border-radius:2px; animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg); opacity:.15;}}
+
+/* ============================================================
+   RANKING
+   ============================================================ */
+.podium{display:flex; align-items:flex-end; justify-content:center; gap:9px; margin:14px 0 18px;}
+.pod{flex:1; max-width:112px; text-align:center;}
+.pod .crown{font-size:20px; height:24px;}
+.pod .face{
+  width:52px; height:52px; margin:0 auto 6px; border-radius:50%; display:grid; place-items:center;
+  font-family:"Jua",sans-serif; font-size:19px; color:#fff; border:3px solid #fff;
+  box-shadow:0 6px 14px rgba(0,0,0,.10);
+}
+.pod .nm{font-family:"Jua",sans-serif; font-size:13.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.pod .base{
+  margin-top:7px; border-radius:14px 14px 8px 8px; padding:8px 4px;
+  font-family:"Jua",sans-serif; font-size:15px; color:#fff;
+  transform-origin:bottom;
+  animation:rise .5s cubic-bezier(.2,1.3,.4,1) both;
+}
+.pod.p1 .base{height:74px; background:linear-gradient(180deg,#FFD764,var(--yellow-d));}
+.pod.p2 .base{height:56px; background:linear-gradient(180deg,#E3D9C6,#C9BCA3);}
+.pod.p3 .base{height:44px; background:linear-gradient(180deg,#FFC6A8,#E9A47F);}
+.pod.p1{order:2} .pod.p2{order:1} .pod.p3{order:3}
+@keyframes rise{from{transform:scaleY(.15); opacity:0;}to{transform:scaleY(1); opacity:1;}}
+
+.board-item{
+  display:flex; align-items:center; gap:11px; padding:12px 14px; border-radius:var(--r-sm);
+  background:#FFFCF6; border:2px solid var(--line); margin-bottom:8px;
+  animation:fade .3s ease both;
+}
+.board-item .rk{font-family:"Jua",sans-serif; font-size:15px; width:26px; text-align:center; color:var(--muted);}
+.board-item .nm{flex:1; font-family:"Jua",sans-serif; font-size:15.5px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.board-item .sc{font-family:"Jua",sans-serif; font-size:15px; color:var(--mint-d);}
+.board-item.me{border-color:var(--pink); background:#FFF6F8; box-shadow:0 0 0 4px rgba(255,159,182,.14);}
+.board-item.me .nm::after{content:" (나)"; font-size:12px; color:var(--pink-d);}
+
+.divider{display:flex; align-items:center; gap:10px; margin:22px 0 14px; color:var(--muted); font-family:"Gaegu",sans-serif; font-weight:700; font-size:14px;}
+.divider::before,.divider::after{content:""; flex:1; height:2px; background:var(--line); border-radius:2px;}
+
+.live{font-family:"Gaegu",sans-serif; font-weight:700; font-size:12.5px; color:var(--mint-d); text-align:center; margin-top:12px;}
+.live .pulse{display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--mint-d); margin-right:5px; animation:blink 1.3s infinite;}
+
+.btnrow{display:flex; gap:9px; margin-top:16px;}
+.btnrow .btn{margin-top:0;}
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="status" id="status"><span class="dot"></span><span id="statusTxt">랭킹 서버 연결 중…</span></div>
 
-    <!-- 홈 -->
-    <div id="home">
-      <div class="deco">🎂 ✨ 🎀</div>
-      <h1>소원 퀴즈</h1>
-      <div class="sub">누가 소원이를 제일 잘 알까?<br>닉네임 넣고 시작! 다들 각자 폰으로 참여해도 랭킹이 실시간으로 합쳐져 💕</div>
-      <input type="text" id="nick" placeholder="닉네임" maxlength="12" autocomplete="off">
-      <button class="btn" id="startBtn">시작하기</button>
-      <button class="btn ghost hidden" id="toBoardBtn" style="margin-top:14px">🏆 실시간 랭킹 보기</button>
-      <div id="already" class="small"></div>
-      <button class="btn ghost hidden" id="resetBtn" style="margin-top:10px">🔄 새 게임 (전체 기록 초기화)</button>
+<div class="bgdeco" id="bgdeco"></div>
+<div class="confetti" id="confetti"></div>
+
+<div class="wrap">
+<div class="card">
+  <div class="status" id="status"><span class="dot"></span><span id="statusTxt">서버 연결 중…</span></div>
+
+  <!-- ============ 1. 참가 (닉네임) ============ -->
+  <div id="scJoin" class="screen">
+    <div class="deco"><span>🎂</span><span>✨</span><span>🎀</span></div>
+    <div class="tagline">💛 우정 테스트 💛</div>
+    <h1>신소원 퀴즈</h1>
+    <p class="sub">과연 나는 신소원을<br>얼만큼 알고 있을까?</p>
+
+    <div class="field">
+      <label>닉네임</label>
+      <input type="text" id="nick" placeholder="이름이나 별명 입력" maxlength="12" autocomplete="off">
     </div>
+    <button class="btn" id="joinBtn">참가하기 🙋</button>
+    <p class="small" id="joinNote"></p>
+    <button class="linkish" id="hostLink">🎤 내가 진행할게 (호스트 모드)</button>
+  </div>
 
-    <!-- 퀴즈 -->
-    <div id="quiz" class="hidden">
-      <div class="prog"><span id="whoTurn"></span><span id="qnum"></span></div>
-      <div class="q" id="qtext"></div>
-      <div id="opts"></div>
-    </div>
-
-    <!-- 중간 결과 -->
-    <div id="between" class="between hidden">
-      <div class="deco">🎉</div>
-      <h1 id="bScore">🎉</h1>
-      <div class="score-big" id="bScoreNum"></div>
-      <div class="pass">저장 완료! 📱<br>다음 사람에게 폰을 넘기거나,<br>친구가 자기 폰으로 참여해도 돼!</div>
-      <button class="btn" id="nextPlayerBtn">다음 사람 하기</button>
-      <button class="btn ghost" id="seeBoardBtn">🏆 랭킹 보기</button>
-    </div>
-
-    <!-- 랭킹 -->
-    <div id="board" class="hidden">
-      <div class="deco">🏆</div>
-      <h1>랭킹</h1>
-      <div class="sub">소원이를 제일 잘 아는 사람은?</div>
-      <div id="boardList"></div>
-      <div id="certBox"></div>
-      <div class="live">🟢 실시간 업데이트 중</div>
-      <button class="btn ghost" id="againBtn" style="margin-top:14px">➕ 나도 참가하기</button>
-      <button class="btn ghost" id="resetBtn2" style="margin-top:8px">🔄 새 게임 (전체 기록 초기화)</button>
+  <!-- ============ 2. 대기실 ============ -->
+  <div id="scLobby" class="screen hidden">
+    <div class="deco"><span>🎉</span></div>
+    <h1>참가 완료!</h1>
+    <p class="sub" id="lobbyMsg">진행자가 시작할 때까지 잠깐만 기다려줘</p>
+    <div class="spinner"></div>
+    <div class="lobbybox">
+      <div class="cnt" id="lobbyCnt"></div>
+      <div class="plist" id="lobbyList"></div>
     </div>
   </div>
 
-<!-- Firebase (실시간 랭킹 DB) -->
+  <!-- ============ 3. 문제 ============ -->
+  <div id="scQ" class="screen hidden">
+    <div class="qhead">
+      <span class="who" id="whoTurn"></span>
+      <span class="qcount" id="qnum"></span>
+    </div>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="q" id="qtext"></div>
+    <div id="opts"></div>
+    <div id="qFoot"></div>
+  </div>
+
+  <!-- ============ 4. 정답 공개 ============ -->
+  <div id="scReveal" class="screen hidden">
+    <div class="qhead">
+      <span class="who" id="rvWho"></span>
+      <span class="qcount" id="rvNum"></span>
+    </div>
+    <div class="q" id="rvQ"></div>
+    <div class="answerpill" id="rvPill"></div>
+    <div id="rvOpts"></div>
+    <div id="rvVerdict"></div>
+    <div id="rvHost"></div>
+  </div>
+
+  <!-- ============ 5. 최종 결과 ============ -->
+  <div id="scFinal" class="screen hidden">
+    <div id="myCardBox"></div>
+    <div id="finalRank"></div>
+    <div id="finalHost"></div>
+  </div>
+
+  <!-- ============ 6. 호스트 콘솔 (대기실) ============ -->
+  <div id="scHostLobby" class="screen hidden">
+    <div class="deco"><span>🎤</span></div>
+    <h1>호스트 콘솔</h1>
+    <p class="sub">참가자가 다 들어오면 시작을 눌러줘<br>모두 같은 화면으로 같이 움직여</p>
+    <div class="lobbybox">
+      <div class="cnt" id="hostCnt"></div>
+      <div class="plist" id="hostList"></div>
+    </div>
+    <button class="btn lav" id="hostStartBtn">퀴즈 시작하기 🚀</button>
+    <button class="btn ghost tiny" id="hostResetBtn">🔄 전체 기록 초기화</button>
+    <button class="linkish" id="playerLink">← 참가자 화면으로</button>
+  </div>
+</div>
+</div>
+
+<!-- ===== Firebase ===== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc }
+    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyCPgRdF7uEMfz6PGThJiOvDzgHMb44l03g",
     authDomain: "sowonqna.firebaseapp.com",
@@ -119,83 +454,482 @@
     messagingSenderId: "233048449454",
     appId: "1:233048449454:web:0e3f2206d4589f596e683f"
   };
+
   try{
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const col = collection(db, "scores");
+    const app  = initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
+    const room     = doc(db, "room", "main");
+    const players  = collection(db, "players");
+    const answers  = collection(db, "answers");
+
+    const listAll = (snap)=>{ const a=[]; snap.forEach(d=>a.push({id:d.id, ...d.data()})); return a; };
+    const onErr = (e)=>{
+      window.__quizErr = '읽기 실패: ' + (e && (e.code || e.message) || '알 수 없음');
+      window.dispatchEvent(new Event('quizdb-error')); console.warn(e);
+    };
+
     window.QuizDB = {
-      add: (rec)=> addDoc(col, { name:rec.name, score:rec.score, timeMs:rec.timeMs, ts:Date.now() }),
-      subscribe: (cb)=> onSnapshot(col, snap=>{ const a=[]; snap.forEach(d=>a.push({id:d.id,...d.data()})); cb(a); }, e=>{ window.__quizErr='읽기 실패 (Firestore 테스트 모드 확인)'; window.dispatchEvent(new Event('quizdb-error')); console.warn(e); }),
-      reset: async ()=>{ const s=await getDocs(col); await Promise.all(s.docs.map(d=>deleteDoc(doc(db,"scores",d.id)))); }
+      subscribeRoom:    (cb)=> onSnapshot(room,    s=> cb(s.exists() ? s.data() : null), onErr),
+      subscribePlayers: (cb)=> onSnapshot(players, s=> cb(listAll(s)), onErr),
+      subscribeAnswers: (cb)=> onSnapshot(answers, s=> cb(listAll(s)), onErr),
+
+      setRoom: (obj)=> setDoc(room, obj, { merge:true }),
+      join:    (pid, name)=> setDoc(doc(players, pid), { name, ts:Date.now() }),
+      answer:  (qIdx, pid, name, choice, ms)=>
+                 setDoc(doc(answers, qIdx+"_"+pid), { qIdx, pid, name, choice, ms, ts:Date.now() }),
+
+      resetAll: async ()=>{
+        const [ps, as] = await Promise.all([ getDocs(players), getDocs(answers) ]);
+        await Promise.all([
+          ...ps.docs.map(d=>deleteDoc(d.ref)),
+          ...as.docs.map(d=>deleteDoc(d.ref))
+        ]);
+        await setDoc(room, { phase:'lobby', qIdx:0, startedAt:0, round:Date.now() }, { merge:true });
+      }
     };
     window.dispatchEvent(new Event('quizdb-ready'));
-  }catch(e){ window.__quizErr='DB 초기화 실패'; window.dispatchEvent(new Event('quizdb-error')); console.warn(e); }
+  }catch(e){
+    window.__quizErr='DB 초기화 실패: ' + (e && (e.code || e.message) || '');
+    window.dispatchEvent(new Event('quizdb-error'));
+    console.warn(e);
+  }
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/* ===== 문제 (⚠️ 예시 — 진짜 문제/정답 주면 교체) ===== */
+/* ============================================================
+   문제 — a 값이 정답 번호(0부터). [확인] 표시된 건 정답 번호 확인 필요
+   ============================================================ */
 const QUESTIONS = [
-  { q:"소원이의 MBTI는?", opts:["ENFP","INFJ","ISTP","ESTJ"], a:0 },
-  { q:"소원이가 제일 좋아하는 음식은?", opts:["떡볶이","초밥","마라탕","치킨"], a:2 },
-  { q:"소원이 최애 캐릭터는?", opts:["피카츄","괴도키드","명탐정 코난","짱구"], a:1 },
-  { q:"소원이가 요즘 제일 많이 하는 것은?", opts:["넷플릭스","게임","산책","코딩"], a:0 },
-  { q:"소원이 이상형은?", opts:["다정한 사람","웃긴 사람","능력있는 사람","키 큰 사람"], a:1 },
-  { q:"소원이가 가고 싶은 여행지는?", opts:["일본","유럽","제주","하와이"], a:1 },
+  { q:"신소원의 MBTI는?",
+    opts:["INFP","ISFP","ISFJ","ESFP"], a:1 },
+
+  { q:"신소원의 생일은?",
+    opts:["7월 22일","8월 2일","8월 12일","7월 30일"], a:1 },
+
+  { q:"신소원이 회사에 입사한 달은?",
+    opts:["1월","3월","7월","9월"], a:1 },
+
+  { q:"신소원이 제일 싫어하는 과일은?",
+    opts:["사과","배","바나나","포도","참외"], a:2 },
+
+  { q:"신소원이 주로 마시는 음료는?",
+    opts:["아이스 아메리카노","아이스 라떼","아이스 라떼 디카페인","아이스 아메리카노 디카페인"], a:2 },
+
+  { q:"신소원이 가장 좋아하는 과자는?",
+    opts:["홈런볼","콘칩","비쵸비","감자깡"], a:0 },
+
+  { q:"신소원의 이상형은 어떤 얼굴상?",
+    opts:["포근한 곰돌이상","귀여운 강아지상","시크한 고양이상","순둥한 토끼상"], a:0 },   // [확인]
+
+  { q:"신소원이 제일 좋아하는 음식은?",
+    opts:["떡볶이","초밥","마라탕","치킨"], a:2 },                                        // [확인]
+
+  { q:"신소원의 최애 캐릭터는?",
+    opts:["피카츄","괴도키드","명탐정 코난","짱구"], a:1 },                                // [확인]
+
+  { q:"신소원이 제일 가고 싶은 여행지는?",
+    opts:["일본","유럽","제주","하와이"], a:1 },                                          // [확인]
 ];
-const OWNER = "소원";
+const OWNER = "신소원";
+const PARTY_DATE = "2026.08.02";
 
+const TIERS = [
+  { min:1.00, emoji:"👑", title:"신소원 공식 절친 1호", msg:"전부 다 맞혔어…<br>혹시 본인?" },
+  { min:0.80, emoji:"💛", title:"찐친 인증 완료",       msg:"거의 다 맞혔어!<br>소원이가 좋아할 듯" },
+  { min:0.60, emoji:"🙌", title:"꽤 아는 사이",         msg:"나쁘지 않아!<br>디테일만 조금 더." },
+  { min:0.35, emoji:"🤔", title:"아직 알아가는 중",     msg:"음… 오늘부터<br>다시 친해져 보자!" },
+  { min:0.00, emoji:"👀", title:"우리 혹시 초면?",      msg:"괜찮아, 축하는<br>진심이면 되는 거야!" },
+];
+
+const PALETTE = ["#FFC93C","#FF9FB6","#7FDDC0","#B9AAF5","#FFA87F","#8FC7F0","#F0A6C9","#A7D98C"];
+
+/* ===== 배경 이모지 패턴 ===== */
+const DECO = ["🎂","🎀","✨","💛","🍰","🧸"];
+function buildDeco(){
+  const box=document.getElementById('bgdeco');
+  const gap = window.innerWidth<420 ? 62 : 76;
+  const cols = Math.ceil(window.innerWidth/gap)+1;
+  const rows = Math.ceil(window.innerHeight/gap)+1;
+  let html='';
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x=c*gap+(r%2?gap/2:0), y=r*gap;
+      html += `<i style="left:${x}px;top:${y}px;animation-delay:${((r+c)%6)*0.4}s">${DECO[(r*3+c)%DECO.length]}</i>`;
+    }
+  }
+  box.innerHTML=html;
+}
+buildDeco();
+let decoT; window.addEventListener('resize', ()=>{ clearTimeout(decoT); decoT=setTimeout(buildDeco,200); });
+
+/* ============================================================
+   공용 유틸
+   ============================================================ */
 const $ = s=>document.querySelector(s);
-const screens = { home:$('#home'), quiz:$('#quiz'), between:$('#between'), board:$('#board') };
-function show(name){ for(const k in screens) screens[k].classList.toggle('hidden', k!==name); }
+const SCREENS = {
+  join:$('#scJoin'), lobby:$('#scLobby'), q:$('#scQ'),
+  reveal:$('#scReveal'), final:$('#scFinal'), hostLobby:$('#scHostLobby')
+};
+let currentScreen='';
+function show(name){
+  if(currentScreen===name) return;
+  currentScreen=name;
+  for(const k in SCREENS) SCREENS[k].classList.toggle('hidden', k!==name);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function colorOf(n){ let h=0; for(const ch of (n||'?')) h=(h*31+ch.charCodeAt(0))%9973; return PALETTE[h%PALETTE.length]; }
+function avatar(n,cls){ return `<span class="${cls||'av'}" style="background:${colorOf(n)}">${esc((n||'?').trim().charAt(0))}</span>`; }
+function tierOf(sc,tot){ const r=tot?sc/tot:0; return TIERS.find(t=>r>=t.min-1e-9)||TIERS[TIERS.length-1]; }
+function letter(i){ return 'ABCDEFGH'[i]||(i+1); }
 
-let remote=[], dbReady=false;
-let cur={ name:'', idx:0, score:0, start:0, answered:false };
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
 
+/* ============================================================
+   상태
+   ============================================================ */
+const IS_HOST = new URLSearchParams(location.search).has('host');
+let myId = store.get('sowonquiz_pid');
+if(!myId){ myId = 'p'+Math.random().toString(36).slice(2,10); store.set('sowonquiz_pid', myId); }
+
+let room = null;          // { phase, qIdx, startedAt, round }
+let players = [];         // [{id,name,ts}]
+let answers = [];         // [{id,qIdx,pid,name,choice,ms}]
+let myName = store.get('sowonquiz_name') || '';
+let joined = false;
+let lastConfettiRound = null;
+
+/* ============================================================
+   DB 연결
+   ============================================================ */
 function setStatus(state,txt){ $('#status').className='status'+(state?' '+state:''); $('#statusTxt').textContent=txt; }
-function onData(arr){ remote=arr; refreshHome(); if(!$('#board').classList.contains('hidden')) renderBoard(); }
-function initDB(){ if(window.QuizDB){ dbReady=true; setStatus('ok','실시간 랭킹 연결됨 🟢'); $('#startBtn').disabled=false; window.QuizDB.subscribe(onData); } }
+function initDB(){
+  if(!window.QuizDB) return;
+  setStatus(IS_HOST?'host':'ok', IS_HOST ? '🎤 호스트 모드' : '실시간 연결됨');
+  $('#joinBtn').disabled=false;
+  window.QuizDB.subscribeRoom(r=>{ room = r || {phase:'lobby',qIdx:0}; render(); });
+  window.QuizDB.subscribePlayers(p=>{ players=p; joined = players.some(x=>x.id===myId); render(); });
+  window.QuizDB.subscribeAnswers(a=>{ answers=a; render(); });
+}
 window.addEventListener('quizdb-ready', initDB);
 window.addEventListener('quizdb-error', ()=> setStatus('err', window.__quizErr||'서버 연결 실패'));
-$('#startBtn').disabled=true;
+$('#joinBtn').disabled=true;
 if(window.QuizDB) initDB();
 
-function refreshHome(){
-  $('#already').textContent = remote.length ? `지금까지 ${remote.length}명 참가 (${remote.map(p=>p.name).slice(0,12).join(', ')})` : '아직 참가자가 없어. 첫 번째로 도전! 💪';
-  $('#toBoardBtn').classList.toggle('hidden', remote.length===0);
-  $('#resetBtn').classList.toggle('hidden', remote.length===0);
+/* ============================================================
+   집계
+   ============================================================ */
+function answersFor(qIdx){ return answers.filter(a=>a.qIdx===qIdx); }
+function myAnswer(qIdx){ return answers.find(a=>a.qIdx===qIdx && a.pid===myId); }
+function scoreboard(){
+  return players.map(p=>{
+    const mine = answers.filter(a=>a.pid===p.id);
+    const score = mine.filter(a=>QUESTIONS[a.qIdx] && a.choice===QUESTIONS[a.qIdx].a).length;
+    const ms = mine.reduce((s,a)=>s+(a.ms||0),0);
+    return { id:p.id, name:p.name, score, ms };
+  }).sort((x,y)=> y.score-x.score || x.ms-y.ms);
 }
-$('#startBtn').onclick = ()=>{ const n=$('#nick').value.trim(); if(!n){ $('#nick').focus(); return; }
-  cur={ name:n, idx:0, score:0, start:Date.now(), answered:false }; show('quiz'); renderQ(); };
-$('#toBoardBtn').onclick = ()=>{ renderBoard(); show('board'); };
-function doReset(){ if(!window.QuizDB) return; if(confirm('모든 참가 기록을 지울까요? (되돌릴 수 없어요)')){ window.QuizDB.reset().catch(()=>alert('초기화 실패 — 잠시 후 다시')); } }
-$('#resetBtn').onclick = doReset; $('#resetBtn2').onclick = doReset;
 
-function renderQ(){ const item=QUESTIONS[cur.idx]; cur.answered=false;
-  $('#whoTurn').textContent=`${cur.name} 님`; $('#qnum').textContent=`${cur.idx+1} / ${QUESTIONS.length}`;
-  $('#qtext').textContent=item.q; const box=$('#opts'); box.innerHTML='';
-  item.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o; b.onclick=()=>pick(i); box.appendChild(b); }); }
-function pick(i){ if(cur.answered) return; cur.answered=true; const item=QUESTIONS[cur.idx], btns=[...document.querySelectorAll('#opts .opt')];
-  btns.forEach((b,bi)=>{ if(bi===item.a) b.classList.add('correct'); else if(bi===i) b.classList.add('wrong'); else b.classList.add('dim'); });
-  if(i===item.a) cur.score++;
-  setTimeout(()=>{ cur.idx++; if(cur.idx>=QUESTIONS.length) finishPlayer(); else renderQ(); }, 750); }
-async function finishPlayer(){ const timeMs=Date.now()-cur.start;
-  $('#bScore').textContent = cur.score===QUESTIONS.length ? '🏆 만점!' : (cur.score>=QUESTIONS.length/2 ? '👏 잘했어!' : '🤔 음...');
-  $('#bScoreNum').textContent = `${cur.score} / ${QUESTIONS.length} 정답`; show('between');
-  if(window.QuizDB){ try{ await window.QuizDB.add({ name:cur.name, score:cur.score, timeMs }); }catch(e){ alert('점수 저장 실패 — Firestore "테스트 모드" 확인'); } } }
-$('#nextPlayerBtn').onclick = ()=>{ $('#nick').value=''; show('home'); $('#nick').focus(); };
-$('#seeBoardBtn').onclick = ()=>{ renderBoard(); show('board'); };
-$('#againBtn').onclick = ()=>{ $('#nick').value=''; show('home'); };
+/* ============================================================
+   참가 / 호스트 전환
+   ============================================================ */
+$('#joinBtn').onclick = async ()=>{
+  const n=$('#nick').value.trim(); if(!n){ $('#nick').focus(); return; }
+  if(!window.QuizDB){ showErr('서버에 아직 연결이 안 됐어요. 새로고침해보세요.'); return; }
+  myName=n; store.set('sowonquiz_name', n);
+  $('#joinBtn').disabled=true; $('#joinBtn').textContent='참가 중… ⏳';
+  try{
+    await window.QuizDB.join(myId, n);
+    $('#joinBtn').textContent='참가하기 🙋';
+  }catch(e){
+    console.error(e);
+    showErr('참가 실패 — ' + (e && (e.code || e.message) || '알 수 없는 오류'));
+    $('#joinBtn').disabled=false; $('#joinBtn').textContent='참가하기 🙋';
+  }
+};
+function showErr(msg){
+  const el=$('#joinNote');
+  el.innerHTML = `<span style="color:#E2718D; font-weight:700">⚠️ ${esc(msg)}</span>`;
+}
+$('#nick').addEventListener('keydown', e=>{ if(e.key==='Enter' && !$('#joinBtn').disabled) $('#joinBtn').click(); });
+$('#hostLink').onclick = ()=>{ location.search='?host=1'; };
+$('#playerLink').onclick = ()=>{ location.search=''; };
 
-function renderBoard(){ const players=remote.slice().sort((a,b)=> b.score-a.score || a.timeMs-b.timeMs);
-  const medals=['🥇','🥈','🥉'], list=$('#boardList'); list.innerHTML='';
-  if(!players.length){ list.innerHTML='<div class="small">아직 참가자가 없어요.</div>'; $('#certBox').innerHTML=''; return; }
-  players.forEach((p,i)=>{ const d=document.createElement('div'); d.className='board-item'+(i===0?' first':'');
-    d.innerHTML=`<span class="rk">${medals[i]||(i+1)}</span><span class="nm">${esc(p.name)}</span><span class="sc">${p.score}/${QUESTIONS.length}</span>`; list.appendChild(d); });
-  const w=players[0];
-  $('#certBox').innerHTML=`<div class="cert"><div class="ttl">✦ 공식 인증서 ✦</div><div class="who">${esc(w.name)}</div>
-    <div class="desc">위 사람은 「${OWNER} 공식 절친 1위 🏆」<br>임을 인증합니다.<br>(${w.score}/${QUESTIONS.length} 정답)</div></div>`; }
-function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-refreshHome();
+/* 호스트 조작 */
+$('#hostStartBtn').onclick = ()=> window.QuizDB.setRoom({ phase:'q', qIdx:0, startedAt:Date.now() });
+function hostReveal(){ window.QuizDB.setRoom({ phase:'reveal' }); }
+function hostNext(){
+  const n=(room.qIdx||0)+1;
+  if(n>=QUESTIONS.length) window.QuizDB.setRoom({ phase:'final' });
+  else window.QuizDB.setRoom({ phase:'q', qIdx:n, startedAt:Date.now() });
+}
+function hostReset(){
+  if(!confirm('참가자와 답변을 전부 지우고 처음으로 돌아갈까요?')) return;
+  window.QuizDB.resetAll().catch(()=>alert('초기화 실패 — 잠시 후 다시'));
+}
+$('#hostResetBtn').onclick = hostReset;
+
+/* 답 선택 */
+async function pick(i){
+  if(!room || room.phase!=='q') return;
+  if(myAnswer(room.qIdx)) return;
+  const ms = Math.max(0, Date.now() - (room.startedAt||Date.now()));
+  try{ await window.QuizDB.answer(room.qIdx, myId, myName, i, ms); }
+  catch(e){ alert('전송 실패 — 다시 눌러줘'); }
+}
+
+/* ============================================================
+   렌더링 — 서버 상태만 보고 화면을 결정
+   ============================================================ */
+function render(){
+  if(!room) return;
+  const phase = room.phase || 'lobby';
+
+  if(IS_HOST){
+    if(phase==='lobby')      { renderHostLobby(); show('hostLobby'); }
+    else if(phase==='q')     { renderQ(true);     show('q'); }
+    else if(phase==='reveal'){ renderReveal(true);show('reveal'); }
+    else                     { renderFinal(true); show('final'); }
+    return;
+  }
+
+  if(!joined){ renderJoinNote(phase); show('join'); return; }
+  if(phase==='lobby')      { renderLobby();  show('lobby'); }
+  else if(phase==='q')     { renderQ(false); show('q'); }
+  else if(phase==='reveal'){ renderReveal(false); show('reveal'); }
+  else                     { renderFinal(false); show('final'); }
+}
+
+function renderJoinNote(phase){
+  const note=$('#joinNote');
+  if(phase==='lobby') note.textContent = players.length ? `${players.length}명이 기다리고 있어 👀` : '';
+  else if(phase==='final') note.textContent = '이미 끝난 게임이야! 진행자가 새 게임을 열면 참가할 수 있어';
+  else note.textContent = `이미 진행 중이야 (${(room.qIdx||0)+1}번 문제) — 지금 참가해도 돼!`;
+  if(myName && !$('#nick').value) $('#nick').value = myName;
+}
+
+function chipList(el, opts){
+  const done = opts && opts.doneIds;
+  el.innerHTML = players.map(p=>{
+    const cls = 'pchip'+(done && done.has(p.id)?' done':'')+(p.id===myId?' me':'');
+    return `<span class="${cls}">${avatar(p.name)}${esc(p.name)}${done&&done.has(p.id)?' ✓':''}</span>`;
+  }).join('');
+}
+function renderLobby(){
+  $('#lobbyCnt').textContent = `지금 ${players.length}명 대기 중`;
+  chipList($('#lobbyList'));
+}
+function renderHostLobby(){
+  $('#hostCnt').textContent = players.length ? `${players.length}명 참가 완료` : '아직 아무도 없어';
+  chipList($('#hostList'));
+  $('#hostStartBtn').disabled = players.length===0;
+}
+
+/* ---------- 문제 화면 ---------- */
+let qKey='';
+function renderQ(isHost){
+  const idx=room.qIdx||0, item=QUESTIONS[idx];
+  if(!item) return;
+  const got = answersFor(idx), doneIds=new Set(got.map(a=>a.pid));
+  const mine = myAnswer(idx);
+
+  /* 다른 사람이 답할 때마다 문제/보기가 다시 그려지지 않게 */
+  const key = `${idx}|${mine?mine.choice:'-'}|${isHost?'h':'p'}`;
+  if(key!==qKey){
+    qKey=key;
+    $('#whoTurn').innerHTML = isHost ? '🎤 호스트' : `${avatar(myName)}${esc(myName)}`;
+    $('#qnum').innerHTML = `<b>${idx+1}</b> / ${QUESTIONS.length}`;
+    $('#barFill').style.width = (idx/QUESTIONS.length*100)+'%';
+    $('#qtext').textContent = item.q;
+
+    const box=$('#opts'); box.innerHTML='';
+    item.opts.forEach((o,i)=>{
+      const b=document.createElement('button');
+      let cls='opt';
+      if(isHost){ cls+=' static'+(i===item.a?' correct':''); }
+      else if(mine){ cls+=' static'+(mine.choice===i?' picked':' dim'); }
+      b.className=cls;
+      b.innerHTML=`<span class="tag">${letter(i)}</span><span class="txt">${esc(o)}</span>`
+                + (isHost && i===item.a ? '<span class="mark">정답</span>' : '');
+      if(!isHost && !mine) b.onclick=()=>pick(i);
+      box.appendChild(b);
+    });
+  }
+
+  const foot=$('#qFoot');
+  if(isHost){
+    foot.innerHTML = `
+      <div class="hostbar">
+        <div class="count-big"><b>${got.length}</b> / ${players.length} 명 답변 완료</div>
+        <div class="plist" id="hostQList"></div>
+        <button class="btn lav" id="revealBtn" style="margin-top:14px">정답 공개하기 🥁</button>
+      </div>`;
+    chipList($('#hostQList'), { doneIds });
+    $('#revealBtn').onclick = hostReveal;
+  }else if(mine){
+    foot.innerHTML = `
+      <div class="waiting">
+        <div class="spinner"></div>
+        <div class="sub" style="margin:0"><b>${letter(mine.choice)}</b> 골랐어!<br><span class="dots3">다른 사람 기다리는 중</span></div>
+        <div class="count-big" style="margin-top:10px"><b>${got.length}</b> / ${players.length} 명 완료</div>
+        <div class="plist" id="qWaitList"></div>
+      </div>`;
+    chipList($('#qWaitList'), { doneIds });
+  }else{
+    foot.innerHTML = `<p class="small">답을 고르면 다른 사람들을 기다렸다가<br>다같이 정답을 확인해 👀</p>`;
+  }
+}
+
+/* ---------- 정답 공개 ---------- */
+function renderReveal(isHost){
+  const idx=room.qIdx||0, item=QUESTIONS[idx];
+  if(!item) return;
+  const got=answersFor(idx), mine=myAnswer(idx);
+
+  $('#rvWho').innerHTML = isHost ? '🎤 호스트' : `${avatar(myName)}${esc(myName)}`;
+  $('#rvNum').innerHTML = `<b>${idx+1}</b> / ${QUESTIONS.length}`;
+  $('#rvQ').textContent = item.q;
+  $('#rvPill').textContent = `정답 : ${letter(item.a)}. ${item.opts[item.a]}`;
+
+  const box=$('#rvOpts'); box.innerHTML='';
+  item.opts.forEach((o,i)=>{
+    const who = got.filter(a=>a.choice===i);
+    const d=document.createElement('div');
+    d.className = 'opt static '+(i===item.a?'correct':(who.length?'wrong':'dim'));
+    d.innerHTML = `<span class="tag">${letter(i)}</span><span class="txt">${esc(o)}</span>`
+      + `<span class="chosen">${who.map(a=>avatar(a.name)).join('')}</span>`
+      + `<span class="mark">${who.length}</span>`;
+    box.appendChild(d);
+  });
+
+  const v=$('#rvVerdict');
+  if(isHost){
+    const right=got.filter(a=>a.choice===item.a).length;
+    v.innerHTML = `<div class="count-big" style="margin-top:14px"><b>${right}</b> / ${got.length} 명 정답</div>`;
+  }else if(mine){
+    const ok = mine.choice===item.a;
+    v.innerHTML = `<div class="verdict ${ok?'good':'bad'}">${ok?'맞혔어! 🎉':'아쉽다… 😢'}</div>`;
+  }else{
+    v.innerHTML = `<p class="small">이 문제는 놓쳤어! 다음 문제부터 참여 가능 🙌</p>`;
+  }
+
+  $('#rvHost').innerHTML = isHost
+    ? `<div class="hostbar"><button class="btn lav" id="nextBtn">${idx+1>=QUESTIONS.length?'최종 결과 보기 🏆':'다음 문제 ➜'}</button></div>`
+    : `<p class="small">진행자가 넘길 때까지 기다려줘<span class="dots3"></span></p>`;
+  if(isHost) $('#nextBtn').onclick = hostNext;
+}
+
+/* ---------- 최종 결과 ---------- */
+function renderFinal(isHost){
+  const total=QUESTIONS.length, sb=scoreboard();
+
+  /* 내 결과 카드 */
+  const box=$('#myCardBox');
+  if(!isHost){
+    const me=sb.find(p=>p.id===myId);
+    const sc=me?me.score:0, t=tierOf(sc,total);
+    box.innerHTML = `
+      <div class="result-card" id="resultCard">
+        <div class="rc-badge">✦ ${esc(OWNER)} 우정 테스트 ✦</div>
+        <div class="rc-emoji">${t.emoji}</div>
+        <div class="rc-title">${t.title}</div>
+        <div class="rc-name">${esc(myName)} 님</div>
+        <div class="ring">
+          <svg width="132" height="132" viewBox="0 0 132 132">
+            <circle cx="66" cy="66" r="56" fill="none" stroke="#FBEBCF" stroke-width="13"/>
+            <circle cx="66" cy="66" r="56" fill="none" stroke="url(#g1)" stroke-width="13"
+                    stroke-linecap="round" stroke-dasharray="352"
+                    stroke-dashoffset="${352*(1-sc/total)}"
+                    style="transition:stroke-dashoffset 1s cubic-bezier(.2,1,.3,1)"/>
+            <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#FFD764"/><stop offset="100%" stop-color="#FF9FB6"/>
+            </linearGradient></defs>
+          </svg>
+          <div class="val"><b>${sc}</b><small>/ ${total} 정답</small></div>
+        </div>
+        <div class="rc-msg">${t.msg}</div>
+        <div class="rc-foot">🎂 ${esc(OWNER)} 우정 테스트 · ${PARTY_DATE}</div>
+      </div>
+      <p class="small">📸 캡처해서 소원이한테 보내줘!</p>
+      <button class="btn pink" id="saveImgBtn">🖼️ 결과 카드 이미지로 저장</button>`;
+    $('#saveImgBtn').onclick = saveCard;
+    if(sc/total>=0.8 && lastConfettiRound!==(room.round||'x')){ lastConfettiRound=(room.round||'x'); confetti(); }
+  }else{
+    box.innerHTML = `<div class="deco"><span>🏆</span></div><h1>최종 결과</h1>
+      <p class="sub">${esc(OWNER)}을 제일 잘 아는 사람은?</p>`;
+  }
+
+  /* 랭킹 */
+  const rank=$('#finalRank');
+  if(!sb.length){ rank.innerHTML='<p class="small">참가자가 없어요</p>'; }
+  else{
+    const top=sb.slice(0,3), crowns=['👑','🥈','🥉'];
+    let html = `<div class="divider">랭킹</div><div class="podium">` + top.map((p,i)=>`
+      <div class="pod p${i+1}">
+        <div class="crown">${crowns[i]}</div>
+        ${avatar(p.name,'face')}
+        <div class="nm">${esc(p.name)}</div>
+        <div class="base">${p.score}/${total}</div>
+      </div>`).join('') + `</div>`;
+
+    const others=sb.slice(3);
+    if(others.length) html += others.map((p,i)=>`
+      <div class="board-item${p.id===myId?' me':''}">
+        <span class="rk">${i+4}</span>${avatar(p.name)}
+        <span class="nm">${esc(p.name)}</span>
+        <span class="sc">${p.score}/${total}</span>
+      </div>`).join('');
+
+    const w=sb[0];
+    html += `
+      <div class="result-card" style="margin-top:18px">
+        <div class="rc-badge">✦ 공식 인증서 ✦</div>
+        <div class="rc-emoji">🏆</div>
+        <div class="rc-title">${esc(w.name)}</div>
+        <div class="rc-msg" style="border-top:none; padding-top:6px">
+          위 사람은 「${esc(OWNER)}을 가장 잘 아는 사람 1위」<br>임을 공식 인증합니다.
+        </div>
+        <div class="rc-foot">${w.score}/${total} 정답 · ${PARTY_DATE}</div>
+      </div>`;
+    rank.innerHTML = html;
+  }
+
+  $('#finalHost').innerHTML = isHost
+    ? `<div class="hostbar"><button class="btn lav" id="againBtn">🔄 새 게임 시작 (기록 초기화)</button></div>`
+    : `<div class="live"><span class="pulse"></span>진행자가 새 게임을 열면 자동으로 넘어가</div>`;
+  if(isHost) $('#againBtn').onclick = hostReset;
+}
+
+/* ---------- 이미지 저장 / 컨페티 ---------- */
+async function saveCard(){
+  const btn=$('#saveImgBtn'), old=btn.textContent;
+  if(typeof html2canvas!=='function'){ alert('이미지 저장이 안 되네 😥 스크린샷으로 캡처해줘!'); return; }
+  btn.textContent='만들고 있어… ⏳'; btn.disabled=true;
+  try{
+    const canvas=await html2canvas($('#resultCard'), { scale:3, backgroundColor:'#FFFDF5', useCORS:true });
+    const a=document.createElement('a');
+    a.download=`신소원우정테스트_${myName}.png`;
+    a.href=canvas.toDataURL('image/png'); a.click();
+  }catch(e){ alert('이미지 저장 실패 😥 스크린샷으로 캡처해줘!'); console.warn(e); }
+  btn.textContent=old; btn.disabled=false;
+}
+function confetti(){
+  const wrap=$('#confetti');
+  for(let i=0;i<70;i++){
+    const p=document.createElement('i');
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=PALETTE[i%PALETTE.length];
+    p.style.animationDuration=(2.2+Math.random()*1.8)+'s';
+    p.style.animationDelay=(Math.random()*.5)+'s';
+    p.style.opacity=.85;
+    wrap.appendChild(p);
+    setTimeout(()=>p.remove(), 4800);
+  }
+}
 </script>
 </body>
 </html>
