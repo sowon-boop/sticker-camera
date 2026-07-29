@@ -518,18 +518,6 @@ const QUESTIONS = [
 
   { q:"신소원이 가장 좋아하는 과자는?",
     opts:["홈런볼","콘칩","비쵸비","감자깡"], a:0 },
-
-  { q:"신소원의 이상형은 어떤 얼굴상?",
-    opts:["포근한 곰돌이상","귀여운 강아지상","시크한 고양이상","순둥한 토끼상"], a:0 },   // [확인]
-
-  { q:"신소원이 제일 좋아하는 음식은?",
-    opts:["떡볶이","초밥","마라탕","치킨"], a:2 },                                        // [확인]
-
-  { q:"신소원의 최애 캐릭터는?",
-    opts:["피카츄","괴도키드","명탐정 코난","짱구"], a:1 },                                // [확인]
-
-  { q:"신소원이 제일 가고 싶은 여행지는?",
-    opts:["일본","유럽","제주","하와이"], a:1 },                                          // [확인]
 ];
 const OWNER = "신소원";
 const PARTY_DATE = "2026.08.02";
@@ -611,6 +599,8 @@ function initDB(){
   if(!window.QuizDB) return;
   setStatus(IS_HOST?'host':'ok', IS_HOST ? '🎤 호스트 모드' : '실시간 연결됨');
   $('#joinBtn').disabled=false;
+  // 호스트는 실시간 연결을 기다리는 동안에도 참가 화면이 아니라 콘솔을 바로 보여준다
+  if(IS_HOST){ renderHostLobby(); show('hostLobby'); }
   window.QuizDB.subscribeRoom(r=>{ room = r || {phase:'lobby',qIdx:0}; render(); });
   window.QuizDB.subscribePlayers(p=>{ players=p; joined = players.some(x=>x.id===myId); render(); });
   window.QuizDB.subscribeAnswers(a=>{ answers=a; render(); });
