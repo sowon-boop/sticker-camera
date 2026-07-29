@@ -4,54 +4,61 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@700&display=swap" rel="stylesheet">
 <title>소원 퀴즈 🎂</title>
 <style>
-  :root{ --bg:#211A33; --surface:#2E2542; --surface2:#392E52; --line:#463a63;
-    --pink:#FF5D9E; --mint:#57E6C3; --yellow:#FFD166; --text:#F3EEFB; --muted:#A99CC4; }
+  :root{
+    --cream:#FFF7F1; --card:#FFFFFF; --ink:#6A5560; --muted:#B6A6B0; --line:#F3E4EA;
+    --coral:#FF89A9; --coral2:#FFB48C; --lav:#C6BBF3; --mint:#8FE3C6; --gold:#F4C56B;
+  }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  body{margin:0; font-family:"Jua","Poppins",system-ui,sans-serif; background:linear-gradient(160deg,#241b3a,#1a1428);
-    color:var(--text); min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px;}
-  .card{width:100%; max-width:460px; background:var(--surface); border:1px solid var(--line);
-    border-radius:24px; padding:22px 20px 26px; box-shadow:0 18px 50px rgba(0,0,0,.5);}
-  h1{font-size:26px; margin:.2em 0 .1em; text-align:center;}
-  .sub{color:var(--muted); text-align:center; font-size:14px; margin-bottom:18px; line-height:1.5;}
-  input[type=text]{width:100%; padding:14px 16px; border-radius:14px; border:1px solid var(--line);
-    background:var(--surface2); color:var(--text); font-size:17px; font-family:inherit; text-align:center;}
-  input::placeholder{color:var(--muted);}
-  .btn{display:block; width:100%; margin-top:12px; padding:15px; border:none; border-radius:16px; cursor:pointer;
-    font-family:inherit; font-size:17px; font-weight:800; color:#2a1a00;
-    background:linear-gradient(135deg,var(--pink),var(--yellow)); transition:transform .1s;}
-  .btn:active{transform:scale(.97);}
-  .btn:disabled{opacity:.5;}
-  .btn.ghost{background:var(--surface2); color:var(--text); border:1px solid var(--line);}
+  body{margin:0; font-family:"Jua",system-ui,sans-serif;
+    background:linear-gradient(165deg,#FFF6EF 0%,#FDEBF0 55%,#F3ECFB 100%);
+    color:var(--ink); min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px;}
+  .card{width:100%; max-width:440px; background:var(--card); border-radius:30px; padding:26px 22px 30px;
+    box-shadow:0 20px 44px rgba(255,137,169,.22), 0 4px 14px rgba(198,187,243,.18);}
+  h1{font-size:29px; margin:.15em 0 .1em; text-align:center; color:#5f4a56; letter-spacing:-.5px;}
+  .sub{color:var(--muted); text-align:center; font-size:14.5px; margin-bottom:20px; line-height:1.6;}
+  input[type=text]{width:100%; padding:15px 16px; border-radius:16px; border:2px solid var(--line);
+    background:#FFFBFC; color:var(--ink); font-size:17px; font-family:inherit; text-align:center; outline:none; transition:border-color .15s;}
+  input[type=text]:focus{border-color:var(--coral);}
+  input::placeholder{color:#D7C7D0;}
+  .btn{display:block; width:100%; margin-top:12px; padding:16px; border:none; border-radius:18px; cursor:pointer;
+    font-family:inherit; font-size:17.5px; font-weight:800; color:#fff; letter-spacing:.3px;
+    background:linear-gradient(135deg,var(--coral),var(--coral2)); box-shadow:0 8px 18px rgba(255,137,169,.35); transition:transform .1s, box-shadow .1s;}
+  .btn:active{transform:translateY(1px) scale(.99); box-shadow:0 4px 10px rgba(255,137,169,.3);}
+  .btn:disabled{opacity:.5; box-shadow:none;}
+  .btn.ghost{background:#FBEFF4; color:#8a6f7d; box-shadow:none; border:2px solid var(--line);}
   .hidden{display:none;}
-  .prog{display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:8px;}
-  .q{font-size:20px; line-height:1.4; margin:6px 0 18px; min-height:56px;}
-  .opt{display:block; width:100%; text-align:left; margin-bottom:10px; padding:14px 16px; border-radius:14px;
-    border:2px solid var(--line); background:var(--surface2); color:var(--text); font-size:16px; font-family:inherit; cursor:pointer;}
+  .prog{display:flex; justify-content:space-between; color:var(--muted); font-size:13px; margin-bottom:10px; font-family:"Gaegu",sans-serif;}
+  .q{font-size:21px; line-height:1.45; margin:6px 0 20px; min-height:58px; color:#5f4a56;}
+  .opt{display:block; width:100%; text-align:left; margin-bottom:11px; padding:15px 17px; border-radius:16px;
+    border:2px solid var(--line); background:#FFFBFC; color:var(--ink); font-size:16.5px; font-family:inherit; cursor:pointer; transition:transform .08s;}
   .opt:active{transform:scale(.98);}
-  .opt.correct{border-color:var(--mint); background:rgba(87,230,195,.18);}
-  .opt.wrong{border-color:var(--pink); background:rgba(255,93,158,.16);}
-  .opt.dim{opacity:.5;}
+  .opt.correct{border-color:var(--mint); background:#EAFBF4; color:#3aa588;}
+  .opt.wrong{border-color:var(--coral); background:#FFF0F4; color:#d76a86;}
+  .opt.dim{opacity:.45;}
   .between{text-align:center;}
-  .score-big{font-size:44px; margin:8px 0;}
-  .pass{color:var(--yellow); font-weight:800; margin:14px 0; font-size:17px; line-height:1.5;}
-  .board-item{display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:14px;
-    background:var(--surface2); border:1px solid var(--line); margin-bottom:8px;}
-  .board-item .rk{font-size:20px; width:34px; text-align:center;}
-  .board-item .nm{flex:1; font-size:16px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .board-item .sc{color:var(--mint); font-weight:800;}
-  .board-item.first{background:linear-gradient(135deg,rgba(255,209,102,.25),rgba(255,93,158,.18)); border-color:var(--yellow);}
-  .cert{margin:16px 0; padding:20px 16px; border-radius:18px; text-align:center;
-    background:linear-gradient(135deg,#3a2b16,#3a1e2e); border:2px solid var(--yellow);}
-  .cert .ttl{color:var(--yellow); font-size:15px; letter-spacing:1px;}
-  .cert .who{font-size:28px; margin:8px 0;}
-  .cert .desc{color:var(--muted); font-size:13px; line-height:1.5;}
-  .small{font-size:12px; color:var(--muted); text-align:center; margin-top:14px; line-height:1.5;}
-  .status{font-size:12px; text-align:center; margin-bottom:10px; color:var(--muted);}
-  .status .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#888; margin-right:5px; vertical-align:middle;}
-  .status.ok .dot{background:var(--mint);} .status.err .dot{background:var(--pink);}
-  .live{font-size:11px; color:var(--mint); text-align:center; margin-top:6px;}
+  .score-big{font-size:46px; margin:6px 0; color:var(--coral);}
+  .pass{color:#c98a5a; font-weight:800; margin:14px 0; font-size:16.5px; line-height:1.6;}
+  .board-item{display:flex; align-items:center; gap:11px; padding:13px 15px; border-radius:16px;
+    background:#FFFBFC; border:2px solid var(--line); margin-bottom:9px;}
+  .board-item .rk{font-size:21px; width:34px; text-align:center;}
+  .board-item .nm{flex:1; font-size:16.5px; font-weight:800; color:#5f4a56; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .board-item .sc{color:#3aa588; font-weight:800;}
+  .board-item.first{background:linear-gradient(135deg,#FFF3DE,#FFE6EE); border-color:var(--gold);}
+  .cert{margin:18px 0; padding:22px 16px; border-radius:22px; text-align:center;
+    background:linear-gradient(150deg,#FFF3E4,#FFE7EF); border:2px dashed var(--gold);}
+  .cert .ttl{color:#d9a441; font-size:15px; letter-spacing:2px; font-weight:800;}
+  .cert .who{font-size:30px; margin:10px 0; color:#e07a97;}
+  .cert .desc{color:#a98f9a; font-size:13.5px; line-height:1.6;}
+  .small{font-size:12.5px; color:var(--muted); text-align:center; margin-top:16px; line-height:1.6;}
+  .status{font-size:12px; text-align:center; margin-bottom:12px; color:var(--muted);}
+  .status .dot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#D9C9D2; margin-right:6px; vertical-align:middle;}
+  .status.ok .dot{background:var(--mint);} .status.err .dot{background:var(--coral);}
+  .live{font-size:11.5px; color:#3aa588; text-align:center; margin-top:8px;}
+  .deco{text-align:center; font-size:26px; margin-bottom:2px; letter-spacing:4px;}
 </style>
 </head>
 <body>
@@ -60,8 +67,9 @@
 
     <!-- 홈 -->
     <div id="home">
-      <h1>🎂 소원 퀴즈</h1>
-      <div class="sub">누가 소원이를 제일 잘 알까?<br>닉네임 넣고 시작! 다들 각자 폰으로 참여해도 랭킹이 실시간으로 합쳐져.</div>
+      <div class="deco">🎂 ✨ 🎀</div>
+      <h1>소원 퀴즈</h1>
+      <div class="sub">누가 소원이를 제일 잘 알까?<br>닉네임 넣고 시작! 다들 각자 폰으로 참여해도 랭킹이 실시간으로 합쳐져 💕</div>
       <input type="text" id="nick" placeholder="닉네임" maxlength="12" autocomplete="off">
       <button class="btn" id="startBtn">시작하기</button>
       <button class="btn ghost hidden" id="toBoardBtn" style="margin-top:14px">🏆 실시간 랭킹 보기</button>
@@ -78,6 +86,7 @@
 
     <!-- 중간 결과 -->
     <div id="between" class="between hidden">
+      <div class="deco">🎉</div>
       <h1 id="bScore">🎉</h1>
       <div class="score-big" id="bScoreNum"></div>
       <div class="pass">저장 완료! 📱<br>다음 사람에게 폰을 넘기거나,<br>친구가 자기 폰으로 참여해도 돼!</div>
@@ -87,7 +96,8 @@
 
     <!-- 랭킹 -->
     <div id="board" class="hidden">
-      <h1>🏆 랭킹</h1>
+      <div class="deco">🏆</div>
+      <h1>랭킹</h1>
       <div class="sub">소원이를 제일 잘 아는 사람은?</div>
       <div id="boardList"></div>
       <div id="certBox"></div>
@@ -115,7 +125,7 @@
     const col = collection(db, "scores");
     window.QuizDB = {
       add: (rec)=> addDoc(col, { name:rec.name, score:rec.score, timeMs:rec.timeMs, ts:Date.now() }),
-      subscribe: (cb)=> onSnapshot(col, snap=>{ const a=[]; snap.forEach(d=>a.push({id:d.id,...d.data()})); cb(a); }, e=>{ window.__quizErr='읽기 실패 (Firestore 테스트 모드 켰는지 확인)'; window.dispatchEvent(new Event('quizdb-error')); console.warn(e); }),
+      subscribe: (cb)=> onSnapshot(col, snap=>{ const a=[]; snap.forEach(d=>a.push({id:d.id,...d.data()})); cb(a); }, e=>{ window.__quizErr='읽기 실패 (Firestore 테스트 모드 확인)'; window.dispatchEvent(new Event('quizdb-error')); console.warn(e); }),
       reset: async ()=>{ const s=await getDocs(col); await Promise.all(s.docs.map(d=>deleteDoc(doc(db,"scores",d.id)))); }
     };
     window.dispatchEvent(new Event('quizdb-ready'));
@@ -123,7 +133,7 @@
 </script>
 
 <script>
-/* ===== 문제 (⚠️ 예시 — 소원이가 진짜 문제/정답 주면 교체) ===== */
+/* ===== 문제 (⚠️ 예시 — 진짜 문제/정답 주면 교체) ===== */
 const QUESTIONS = [
   { q:"소원이의 MBTI는?", opts:["ENFP","INFJ","ISTP","ESTJ"], a:0 },
   { q:"소원이가 제일 좋아하는 음식은?", opts:["떡볶이","초밥","마라탕","치킨"], a:2 },
@@ -138,75 +148,53 @@ const $ = s=>document.querySelector(s);
 const screens = { home:$('#home'), quiz:$('#quiz'), between:$('#between'), board:$('#board') };
 function show(name){ for(const k in screens) screens[k].classList.toggle('hidden', k!==name); }
 
-let remote=[];      // Firestore 실시간 점수들
-let dbReady=false;
+let remote=[], dbReady=false;
 let cur={ name:'', idx:0, score:0, start:0, answered:false };
 
-function setStatus(state,txt){ const s=$('#status'); s.className='status'+(state?' '+state:''); $('#statusTxt').textContent=txt; }
-
+function setStatus(state,txt){ $('#status').className='status'+(state?' '+state:''); $('#statusTxt').textContent=txt; }
 function onData(arr){ remote=arr; refreshHome(); if(!$('#board').classList.contains('hidden')) renderBoard(); }
-function initDB(){
-  if(window.QuizDB){ dbReady=true; setStatus('ok','실시간 랭킹 연결됨 🟢'); $('#startBtn').disabled=false; window.QuizDB.subscribe(onData); }
-}
+function initDB(){ if(window.QuizDB){ dbReady=true; setStatus('ok','실시간 랭킹 연결됨 🟢'); $('#startBtn').disabled=false; window.QuizDB.subscribe(onData); } }
 window.addEventListener('quizdb-ready', initDB);
-window.addEventListener('quizdb-error', ()=>{ setStatus('err', window.__quizErr||'서버 연결 실패'); });
+window.addEventListener('quizdb-error', ()=> setStatus('err', window.__quizErr||'서버 연결 실패'));
 $('#startBtn').disabled=true;
-if(window.QuizDB) initDB();   // 이미 로드됐을 수도
+if(window.QuizDB) initDB();
 
 function refreshHome(){
-  $('#already').textContent = remote.length ? `지금까지 ${remote.length}명 참가 (${remote.map(p=>p.name).slice(0,12).join(', ')})` : '아직 참가자가 없어. 첫 번째로 도전!';
+  $('#already').textContent = remote.length ? `지금까지 ${remote.length}명 참가 (${remote.map(p=>p.name).slice(0,12).join(', ')})` : '아직 참가자가 없어. 첫 번째로 도전! 💪';
   $('#toBoardBtn').classList.toggle('hidden', remote.length===0);
   $('#resetBtn').classList.toggle('hidden', remote.length===0);
 }
-
-$('#startBtn').onclick = ()=>{
-  const n=$('#nick').value.trim(); if(!n){ $('#nick').focus(); return; }
-  cur={ name:n, idx:0, score:0, start:Date.now(), answered:false };
-  show('quiz'); renderQ();
-};
+$('#startBtn').onclick = ()=>{ const n=$('#nick').value.trim(); if(!n){ $('#nick').focus(); return; }
+  cur={ name:n, idx:0, score:0, start:Date.now(), answered:false }; show('quiz'); renderQ(); };
 $('#toBoardBtn').onclick = ()=>{ renderBoard(); show('board'); };
 function doReset(){ if(!window.QuizDB) return; if(confirm('모든 참가 기록을 지울까요? (되돌릴 수 없어요)')){ window.QuizDB.reset().catch(()=>alert('초기화 실패 — 잠시 후 다시')); } }
-$('#resetBtn').onclick = doReset;
-$('#resetBtn2').onclick = doReset;
+$('#resetBtn').onclick = doReset; $('#resetBtn2').onclick = doReset;
 
-function renderQ(){
-  const item=QUESTIONS[cur.idx]; cur.answered=false;
-  $('#whoTurn').textContent=`${cur.name} 님`;
-  $('#qnum').textContent=`${cur.idx+1} / ${QUESTIONS.length}`;
-  $('#qtext').textContent=item.q;
-  const box=$('#opts'); box.innerHTML='';
-  item.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o; b.onclick=()=>pick(i,b); box.appendChild(b); });
-}
-function pick(i){
-  if(cur.answered) return; cur.answered=true;
-  const item=QUESTIONS[cur.idx], btns=[...document.querySelectorAll('#opts .opt')];
+function renderQ(){ const item=QUESTIONS[cur.idx]; cur.answered=false;
+  $('#whoTurn').textContent=`${cur.name} 님`; $('#qnum').textContent=`${cur.idx+1} / ${QUESTIONS.length}`;
+  $('#qtext').textContent=item.q; const box=$('#opts'); box.innerHTML='';
+  item.opts.forEach((o,i)=>{ const b=document.createElement('button'); b.className='opt'; b.textContent=o; b.onclick=()=>pick(i); box.appendChild(b); }); }
+function pick(i){ if(cur.answered) return; cur.answered=true; const item=QUESTIONS[cur.idx], btns=[...document.querySelectorAll('#opts .opt')];
   btns.forEach((b,bi)=>{ if(bi===item.a) b.classList.add('correct'); else if(bi===i) b.classList.add('wrong'); else b.classList.add('dim'); });
   if(i===item.a) cur.score++;
-  setTimeout(()=>{ cur.idx++; if(cur.idx>=QUESTIONS.length) finishPlayer(); else renderQ(); }, 750);
-}
-async function finishPlayer(){
-  const timeMs=Date.now()-cur.start;
+  setTimeout(()=>{ cur.idx++; if(cur.idx>=QUESTIONS.length) finishPlayer(); else renderQ(); }, 750); }
+async function finishPlayer(){ const timeMs=Date.now()-cur.start;
   $('#bScore').textContent = cur.score===QUESTIONS.length ? '🏆 만점!' : (cur.score>=QUESTIONS.length/2 ? '👏 잘했어!' : '🤔 음...');
-  $('#bScoreNum').textContent = `${cur.score} / ${QUESTIONS.length} 정답`;
-  show('between');
-  if(window.QuizDB){ try{ await window.QuizDB.add({ name:cur.name, score:cur.score, timeMs }); }catch(e){ alert('점수 저장 실패 — Firestore를 "테스트 모드"로 켰는지 확인해줘'); } }
-}
+  $('#bScoreNum').textContent = `${cur.score} / ${QUESTIONS.length} 정답`; show('between');
+  if(window.QuizDB){ try{ await window.QuizDB.add({ name:cur.name, score:cur.score, timeMs }); }catch(e){ alert('점수 저장 실패 — Firestore "테스트 모드" 확인'); } } }
 $('#nextPlayerBtn').onclick = ()=>{ $('#nick').value=''; show('home'); $('#nick').focus(); };
 $('#seeBoardBtn').onclick = ()=>{ renderBoard(); show('board'); };
 $('#againBtn').onclick = ()=>{ $('#nick').value=''; show('home'); };
 
-function renderBoard(){
-  const players=remote.slice().sort((a,b)=> b.score-a.score || a.timeMs-b.timeMs);
-  const medals=['🥇','🥈','🥉']; const list=$('#boardList'); list.innerHTML='';
+function renderBoard(){ const players=remote.slice().sort((a,b)=> b.score-a.score || a.timeMs-b.timeMs);
+  const medals=['🥇','🥈','🥉'], list=$('#boardList'); list.innerHTML='';
   if(!players.length){ list.innerHTML='<div class="small">아직 참가자가 없어요.</div>'; $('#certBox').innerHTML=''; return; }
   players.forEach((p,i)=>{ const d=document.createElement('div'); d.className='board-item'+(i===0?' first':'');
     d.innerHTML=`<span class="rk">${medals[i]||(i+1)}</span><span class="nm">${esc(p.name)}</span><span class="sc">${p.score}/${QUESTIONS.length}</span>`; list.appendChild(d); });
   const w=players[0];
   $('#certBox').innerHTML=`<div class="cert"><div class="ttl">✦ 공식 인증서 ✦</div><div class="who">${esc(w.name)}</div>
-    <div class="desc">위 사람은 「${OWNER} 공식 절친 1위 🏆」<br>임을 인증합니다.<br>(${w.score}/${QUESTIONS.length} 정답)</div></div>`;
-}
+    <div class="desc">위 사람은 「${OWNER} 공식 절친 1위 🏆」<br>임을 인증합니다.<br>(${w.score}/${QUESTIONS.length} 정답)</div></div>`; }
 function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
 refreshHome();
 </script>
 </body>
