@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<title>소원 역조공 가챠 🎰</title>
+<style>
+  :root{ --bg:#FFF3CC; --card:#fff; --ink:#7A6533; --muted:#C7B888; --line:#F4ECD6;
+    --yellow:#FFCF45; --yellow2:#FFB03A; --pink:#FF9CB4; --mint:#8FE3C6; --gold:#F0B429; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0;}
+  body{font-family:"Jua",system-ui,sans-serif; background:var(--bg); color:var(--ink);
+    min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px;}
+  .wrap{width:100%; max-width:420px; text-align:center;}
+  h1{font-size:26px; color:#6b5220; margin-bottom:4px;}
+  .sub{color:var(--muted); font-size:14px; margin-bottom:18px;}
+
+  /* 가챠 머신 */
+  .machine{width:230px; margin:0 auto; position:relative;}
+  .machine.shake{animation:shake .5s ease;}
+  @keyframes shake{10%,90%{transform:translateX(-2px) rotate(-1deg);}20%,80%{transform:translateX(3px) rotate(1deg);}
+    30%,50%,70%{transform:translateX(-5px) rotate(-1.5deg);}40%,60%{transform:translateX(5px) rotate(1.5deg);}}
+  .dome{position:relative; height:170px; border-radius:120px 120px 22px 22px;
+    background:radial-gradient(circle at 40% 30%, rgba(255,255,255,.9), rgba(255,255,255,.35) 45%, rgba(255,255,255,.12) 70%);
+    border:5px solid #fff; box-shadow:inset 0 -8px 18px rgba(0,0,0,.06), 0 8px 16px rgba(240,180,41,.25);
+    overflow:hidden;}
+  .caps{position:absolute; border-radius:50%;}
+  .body{background:var(--yellow); border-radius:14px; margin-top:-10px; padding:16px 16px 20px; border:5px solid #fff;
+    box-shadow:0 10px 22px rgba(240,180,41,.35);}
+  .slot{width:70px; height:12px; background:#8a6a1e; border-radius:6px; margin:2px auto 14px;}
+  .knob{width:62px; height:62px; border-radius:50%; margin:0 auto; background:#fff; border:5px solid #ffe6a8;
+    position:relative; box-shadow:0 4px 10px rgba(0,0,0,.12); transition:transform 1s cubic-bezier(.2,.7,.2,1);}
+  .knob::before{content:""; position:absolute; inset:14px; border-radius:50%; background:var(--yellow2);}
+  .knob::after{content:""; position:absolute; left:50%; top:8px; width:6px; height:22px; background:#fff; border-radius:4px; transform:translateX(-50%);}
+  .tray{margin-top:12px; height:26px; background:#e9b93a; border-radius:0 0 14px 14px; box-shadow:inset 0 4px 6px rgba(0,0,0,.15);}
+
+  .spinbtn{margin-top:20px; width:100%; padding:16px; border:none; border-radius:18px; font-family:inherit;
+    font-size:18px; font-weight:800; color:#7a5618; background:var(--yellow); cursor:pointer;
+    box-shadow:0 8px 18px rgba(255,180,50,.4); transition:transform .1s;}
+  .spinbtn:active{transform:translateY(1px) scale(.99);}
+  .spinbtn:disabled{opacity:.5;}
+
+  /* 결과 */
+  .result{position:fixed; inset:0; background:rgba(60,45,20,.55); display:none; align-items:center; justify-content:center; padding:24px; z-index:10;}
+  .result.show{display:flex;}
+  .capsule{width:120px; height:120px; border-radius:50%; margin:0 auto 6px; position:relative;
+    background:linear-gradient(#ff9cb4 0 50%, #fff 50% 100%); box-shadow:0 8px 18px rgba(0,0,0,.2);
+    transform:scale(0); animation:pop .5s .05s cubic-bezier(.2,1.4,.4,1) forwards;}
+  @keyframes pop{to{transform:scale(1);}}
+  .prizecard{background:var(--card); border-radius:24px; padding:26px 22px; max-width:340px; width:100%;
+    box-shadow:0 20px 50px rgba(0,0,0,.3); text-align:center; transform:translateY(12px); opacity:0;
+    animation:rise .4s .5s ease forwards;}
+  @keyframes rise{to{transform:translateY(0); opacity:1;}}
+  .prizecard .big{font-size:64px; line-height:1;}
+  .prizecard .pname{font-size:24px; color:#e07a97; margin:10px 0 4px;}
+  .prizecard .pdesc{color:var(--muted); font-size:15px; line-height:1.5;}
+  .photo{width:150px; height:190px; object-fit:cover; border-radius:14px; margin:6px auto; display:block; border:4px solid var(--yellow); background:#FFF3CC;}
+  .photo-ph{width:150px; height:190px; border-radius:14px; margin:6px auto; display:flex; align-items:center; justify-content:center;
+    background:#FFF3CC; border:4px dashed var(--gold); color:var(--muted); font-size:13px; text-align:center; padding:10px;}
+  .again{margin-top:18px; width:100%; padding:14px; border:none; border-radius:16px; font-family:inherit; font-size:16px;
+    font-weight:800; color:#7a5618; background:var(--yellow); cursor:pointer;}
+  .close{margin-top:8px; width:100%; padding:12px; border:2px solid var(--line); border-radius:16px; font-family:inherit;
+    font-size:14px; font-weight:700; color:#8a7635; background:#FFF6DE; cursor:pointer;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎰 소원 역조공 가챠</h1>
+    <div class="sub">돌리면 소원이가 쏜다! 뭐가 나올까?</div>
+
+    <div class="machine" id="machine">
+      <div class="dome" id="dome"></div>
+      <div class="body">
+        <div class="slot"></div>
+        <div class="knob" id="knob"></div>
+      </div>
+      <div class="tray"></div>
+    </div>
+
+    <button class="spinbtn" id="spinBtn">🎲 돌리기</button>
+  </div>
+
+  <div class="result" id="result">
+    <div>
+      <div class="capsule" id="capsule"></div>
+      <div class="prizecard" id="prizecard"></div>
+    </div>
+  </div>
+
+<script>
+/* ===== 가챠 상품 (⚠️ 자유롭게 수정) — weight 클수록 잘 나옴 ===== */
+const PRIZES = [
+  { emoji:"📸", name:"소원 포토카드", desc:"소원이 실물 사진 획득! 💖", photo:"images/sowon.jpg", weight:2 },
+  { emoji:"☕", name:"커피 쿠폰", desc:"소원이가 커피 한 잔 쏜다!", weight:3 },
+  { emoji:"🛵", name:"배달의민족 쿠폰", desc:"소원이가 배달 쏜다!", weight:2 },
+  { emoji:"🍫", name:"간식 하나", desc:"원하는 간식 하나 골라!", weight:3 },
+  { emoji:"🫶", name:"소원이랑 투샷", desc:"소원이랑 투샷 찍을 권리!", weight:3 },
+  { emoji:"😜", name:"꽝!", desc:"다음 기회에… 한 번 더 돌려!", weight:2 },
+];
+const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
+
+// 돔 안에 캡슐 점 뿌리기
+(function fillDome(){
+  const dome=document.getElementById('dome');
+  for(let i=0;i<14;i++){ const c=document.createElement('span'); c.className='caps';
+    const s=26+Math.random()*16; c.style.width=c.style.height=s+'px';
+    c.style.left=(8+Math.random()*78)+'%'; c.style.top=(28+Math.random()*62)+'%';
+    c.style.background=CAP_COLORS[i%CAP_COLORS.length]; c.style.opacity=.9; dome.appendChild(c); }
+})();
+
+let spinning=false, knobTurn=0;
+const spinBtn=document.getElementById('spinBtn');
+function pickPrize(){
+  const total=PRIZES.reduce((s,p)=>s+(p.weight||1),0); let r=Math.random()*total;
+  for(const p of PRIZES){ r-=(p.weight||1); if(r<=0) return p; } return PRIZES[PRIZES.length-1];
+}
+function spin(){
+  if(spinning) return; spinning=true; spinBtn.disabled=true;
+  const machine=document.getElementById('machine'), knob=document.getElementById('knob');
+  knobTurn += 720; knob.style.transform=`rotate(${knobTurn}deg)`;
+  machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake');
+  const prize=pickPrize();
+  const cap=document.getElementById('capsule');
+  cap.style.background=`linear-gradient(${CAP_COLORS[(Math.random()*CAP_COLORS.length)|0]} 0 50%, #fff 50% 100%)`;
+  setTimeout(()=>{ showResult(prize); }, 1050);
+}
+function showResult(p){
+  const card=document.getElementById('prizecard');
+  const photo = p.photo ? `<img class="photo" src="${p.photo}" alt="소원" onerror="this.outerHTML='<div class=\\'photo-ph\\'>여기에 소원 사진이 들어갈 예정 📸</div>'">` : '';
+  card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>
+    <button class="again" id="againBtn">🎲 한 번 더</button>
+    <button class="close" id="closeBtn">닫기</button>`;
+  // 애니메이션 리셋
+  const cap=document.getElementById('capsule'); cap.style.animation='none'; void cap.offsetWidth; cap.style.animation='';
+  card.style.animation='none'; void card.offsetWidth; card.style.animation='';
+  document.getElementById('result').classList.add('show');
+  document.getElementById('againBtn').onclick=()=>{ close(); setTimeout(spin,150); };
+  document.getElementById('closeBtn').onclick=close;
+  spinning=false; spinBtn.disabled=false;
+}
+function close(){ document.getElementById('result').classList.remove('show'); }
+spinBtn.onclick=spin;
+document.getElementById('knob').onclick=spin;
+</script>
+</body>
+</html>
