@@ -296,9 +296,10 @@ input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-siz
 
 .ring{position:relative; width:132px; height:132px; margin:8px auto 6px;}
 .ring svg{transform:rotate(-90deg); display:block;}
-.ring .val{position:absolute; inset:0; display:grid; place-items:center; font-family:"Jua",sans-serif; line-height:1;}
+.ring .val{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-family:"Jua",sans-serif; line-height:1;}
 .ring .val b{font-size:38px; color:var(--yellow-d);}
-.ring .val small{font-size:13px; color:var(--muted); margin-top:5px;}
+.ring .val small{font-size:13px; color:var(--muted); margin-top:6px;}
 
 .rc-msg{
   font-size:14.5px; color:var(--ink2); line-height:1.75; margin-top:10px;
@@ -530,7 +531,7 @@ const QUESTIONS = [
     opts:["홈런볼","콘칩","비쵸비","감자깡"], a:0 },
 ];
 const OWNER = "신소원";
-const PARTY_DATE = "2026.08.02";
+const PARTY_DATE = "2026.07.30";
 
 const TIERS = [
   { min:1.00, emoji:"👑", title:"신소원 공식 절친 1호", msg:"전부 다 맞혔어…<br>혹시 본인?" },
@@ -861,7 +862,6 @@ function renderFinal(isHost){
         <div class="rc-msg">${t.msg}</div>
         <div class="rc-foot">🎂 ${esc(OWNER)} 우정 테스트 · ${PARTY_DATE}</div>
       </div>
-      <p class="small">📸 캡처해서 소원이한테 보내줘!</p>
       <button class="btn pink" id="saveImgBtn">🖼️ 결과 카드 이미지로 저장</button>`;
     $('#saveImgBtn').onclick = saveCard;
     if(sc/total>=0.8 && lastConfettiRound!==(room.round||'x')){ lastConfettiRound=(room.round||'x'); confetti(); }
