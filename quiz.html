@@ -443,12 +443,13 @@ input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-siz
 <!-- ===== Firebase ===== -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-  import { getFirestore, collection, doc, setDoc, onSnapshot, getDocs, deleteDoc }
-    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+  import { getDatabase, ref, onValue, set, update, remove }
+    from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCPgRdF7uEMfz6PGThJiOvDzgHMb44l03g",
     authDomain: "sowonqna.firebaseapp.com",
+    databaseURL: "https://sowonqna-default-rtdb.asia-southeast1.firebasedatabase.app",
     projectId: "sowonqna",
     storageBucket: "sowonqna.firebasestorage.app",
     messagingSenderId: "233048449454",
@@ -456,45 +457,44 @@ input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-siz
   };
 
   try{
-    const app  = initializeApp(firebaseConfig);
-    const db   = getFirestore(app);
-    const room     = doc(db, "room", "main");
-    const players  = collection(db, "players");
-    const answers  = collection(db, "answers");
+    const app = initializeApp(firebaseConfig);
+    const db  = getDatabase(app);
+    const roomRef    = ref(db, "room/main");
+    const playersRef = ref(db, "players");
+    const answersRef = ref(db, "answers");
 
-    const listAll = (snap)=>{ const a=[]; snap.forEach(d=>a.push({id:d.id, ...d.data()})); return a; };
+    /* RTDB 는 객체로 내려온다 — {id, ...값} 배열로 펴서 기존 렌더 코드와 맞춘다 */
+    const listAll = (snap)=>{
+      const v = snap.val() || {};
+      return Object.keys(v).map(k=>({ id:k, ...v[k] }));
+    };
     const onErr = (e)=>{
       window.__quizErr = '읽기 실패: ' + (e && (e.code || e.message) || '알 수 없음');
       window.dispatchEvent(new Event('quizdb-error')); console.warn(e);
     };
 
-    /* 서버에 실제로 반영됐는지 추적 — 로컬 캐시만 보고 '참가 완료'로 속지 않게 */
-    const syncFlag = (s)=>{
-      const pending = s.metadata.fromCache || s.metadata.hasPendingWrites;
-      if(window.__unsynced !== pending){
-        window.__unsynced = pending;
+    /* 서버와 실제로 연결됐는지 — RTDB 가 알려주는 진짜 연결 상태 */
+    onValue(ref(db, ".info/connected"), (s)=>{
+      const connected = s.val() === true;
+      if(window.__unsynced !== !connected){
+        window.__unsynced = !connected;
         window.dispatchEvent(new Event('quizdb-sync'));
       }
-    };
-    const META = { includeMetadataChanges:true };
+    });
 
     window.QuizDB = {
-      subscribeRoom:    (cb)=> onSnapshot(room,    s=> cb(s.exists() ? s.data() : null), onErr),
-      subscribePlayers: (cb)=> onSnapshot(players, META, s=>{ syncFlag(s); cb(listAll(s)); }, onErr),
-      subscribeAnswers: (cb)=> onSnapshot(answers, s=> cb(listAll(s)), onErr),
+      subscribeRoom:    (cb)=> onValue(roomRef,    s=> cb(s.val() || null), onErr),
+      subscribePlayers: (cb)=> onValue(playersRef, s=> cb(listAll(s)), onErr),
+      subscribeAnswers: (cb)=> onValue(answersRef, s=> cb(listAll(s)), onErr),
 
-      setRoom: (obj)=> setDoc(room, obj, { merge:true }),
-      join:    (pid, name)=> setDoc(doc(players, pid), { name, ts:Date.now() }),
+      setRoom: (obj)=> update(roomRef, obj),
+      join:    (pid, name)=> set(ref(db, "players/"+pid), { name, ts:Date.now() }),
       answer:  (qIdx, pid, name, choice, ms)=>
-                 setDoc(doc(answers, qIdx+"_"+pid), { qIdx, pid, name, choice, ms, ts:Date.now() }),
+                 set(ref(db, "answers/"+qIdx+"_"+pid), { qIdx, pid, name, choice, ms, ts:Date.now() }),
 
       resetAll: async ()=>{
-        const [ps, as] = await Promise.all([ getDocs(players), getDocs(answers) ]);
-        await Promise.all([
-          ...ps.docs.map(d=>deleteDoc(d.ref)),
-          ...as.docs.map(d=>deleteDoc(d.ref))
-        ]);
-        await setDoc(room, { phase:'lobby', qIdx:0, startedAt:0, round:Date.now() }, { merge:true });
+        await Promise.all([ remove(playersRef), remove(answersRef) ]);
+        await set(roomRef, { phase:'lobby', qIdx:0, startedAt:0, round:Date.now() });
       }
     };
     window.dispatchEvent(new Event('quizdb-ready'));
