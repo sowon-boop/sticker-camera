@@ -261,14 +261,7 @@
     box-shadow:inset 0 -4px 7px rgba(0,0,0,.22), 0 4px 8px rgba(70,45,5,.4);
   }
   .capOut.open .half.top{transform:translateY(-42px) rotate(-24deg);}
-  .capOut.open .half.bot{transform:translateY(30px) rotate(12deg);}
-  .capPrize{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.2);
-    font-size:36px; opacity:0; z-index:5;
-    filter:drop-shadow(0 4px 6px rgba(80,50,0,.45));
-  }
-  .capOut.open .capPrize{animation:prizepop .5s .12s cubic-bezier(.2,1.5,.4,1) forwards;}
-  @keyframes prizepop{to{opacity:1; transform:translate(-50%,-90%) scale(1);}}
+  .capOut.open .half.bot{transform:translateY(30px) rotate(12deg);}}
 
   /* ==========================================================
      안내 / 도구
@@ -347,7 +340,6 @@
               <div class="tapring"></div>
               <div class="half top" id="capTop"></div>
               <div class="half bot"></div>
-              <div class="capPrize" id="capPrize"></div>
             </div>
             <div class="lip"></div>
           </div>
@@ -369,7 +361,7 @@
        (id 는 저장용이라 바꾸지 말 것 / 총 캡슐 = qty 합계) ===== */
 const PRIZES = [
   { id:"haidilao10", emoji:"🌶️", name:"하이디라오 식사 지원 쿠폰",  desc:"1만원권 — 소원이가 마라 쏜다!", qty:1 },
-  { id:"haidilao5",  emoji:"🌶️", name:"하이디라오 식사 지원 쿠폰",  desc:"5천원권 — 소원이가 마라 보탠다!", qty:1 },
+  { id:"haidilao5",  emoji:"🌶️", name:"하이디라오 식사 지원 쿠폰",  desc:"5천원권 — 하이디라오 가서 쓰자!", qty:1 },
   { id:"jelly",      emoji:"🍬", name:"젤리",                   desc:"달달한 젤리 한 봉지!", qty:2 },
   { id:"choco",      emoji:"🍫", name:"초콜릿",                  desc:"달콤한 초콜릿 하나!", qty:1 },
   { id:"letter",     emoji:"📝", name:"소원이의 손편지",           desc:"직접 써서 보내줌", qty:1 },
@@ -463,7 +455,7 @@ function crack(){ const a=AC(); if(!a) return; const t=a.currentTime, o=a.create
 
 /* ===== 손잡이 돌리기(드래그) ===== */
 const machine=document.getElementById('machine'), knob=document.getElementById('knob');
-const capOut=document.getElementById('capOut'), capPrize=document.getElementById('capPrize'), hint=document.getElementById('hint');
+const capOut=document.getElementById('capOut'), hint=document.getElementById('hint');
 let busy=false, dragging=false, lastAng=0, turned=0, baseRot=0, tickAcc=0;
 let pending=null;   // 나와 있지만 아직 안 연 캡슐의 상품
 const THRESHOLD=300; // 이만큼 돌리면 뽑기
@@ -487,7 +479,7 @@ function dispense(){
   const prize=pickPrize(), col=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
   recordDraw(prize); updateStockUI();
   document.getElementById('capTop').style.background=col;
-  capOut.classList.remove('open','present','tappable'); capPrize.textContent=prize.emoji;
+  capOut.classList.remove('open','present','tappable');
   capOut.style.transform=''; capOut.style.opacity='';
   pending = prize;                       // 사용자가 누를 때까지 들고 있는다
   capOut.classList.remove('drop'); void capOut.offsetWidth; capOut.classList.add('drop');
