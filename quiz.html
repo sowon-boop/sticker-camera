@@ -397,7 +397,7 @@ table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
     <div class="notice">
       ※ 이 시험은 <b>신소원</b>에 대한 이해도를 측정하기 위한 시험입니다.<br>
       ※ 성명을 정확히 기입한 후 감독관의 지시에 따라 시작하십시오.<br>
-      ※ 부정행위(당사자에게 직접 질문) 시 <b>0점</b> 처리됩니다. 🙂
+      ※ 부정행위(옆사람 것 보기) 시 <b>0점</b> 처리됩니다. 🙂
     </div>
     <div class="pad">
       <div class="sect">원 서 접 수</div>
@@ -500,7 +500,7 @@ table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
             <li><b>1.</b><span>코드를 스캔한 후 <b>성명</b>을 정확히 기입하십시오.</span></li>
             <li><b>2.</b><span>전원이 입실하면 감독관의 신호로 <b>동시에</b> 시작됩니다.</span></li>
             <li><b>3.</b><span>답을 마킹한 후 다른 수험생을 기다리면, 정답이 <b>다같이</b> 공개됩니다.</span></li>
-            <li><b>4.</b><span class="warn">부정행위(당사자에게 직접 질문) 시 0점 처리됩니다.</span></li>
+            <li><b>4.</b><span class="warn">부정행위(옆사람 것 보기) 시 0점 처리됩니다.</span></li>
           </ol>
         </div>
 
@@ -508,12 +508,7 @@ table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
       </div>
 
       <div class="noprint">
-        <div class="sect">코 드 설 정</div>
-        <input type="text" id="qrInput" placeholder="시험지 주소(URL)를 붙여넣으세요">
-        <button class="btn" id="qrMakeBtn">이 주소로 코드 생성</button>
         <button class="btn line" id="qrSaveBtn">포스터 이미지로 저장</button>
-        <button class="btn line tiny" id="qrPrintBtn">인쇄하기</button>
-        <p class="small">비워두면 지금 이 페이지 주소가 들어갑니다.</p>
         <button class="linkish" id="qrBackLink">← 시험지로 돌아가기</button>
       </div>
     </div>
@@ -1041,17 +1036,7 @@ function drawQR(url){
     correctLevel: QRCode.CorrectLevel.H
   });
 }
-function initQR(){
-  const saved = store.get('sowonexam_url') || '';
-  $('#qrInput').value = saved;
-  drawQR(saved || baseUrl());
-}
-$('#qrMakeBtn').onclick = ()=>{
-  let v=$('#qrInput').value.trim();
-  if(v && !/^https?:\/\//i.test(v)) v='https://'+v;
-  store.set('sowonexam_url', v);
-  drawQR(v || baseUrl());
-};
+function initQR(){ drawQR(baseUrl()); }
 $('#qrSaveBtn').onclick = async ()=>{
   const btn=$('#qrSaveBtn'), old=btn.textContent;
   if(typeof html2canvas!=='function'){ alert('저장이 안 되네요 😥 스크린샷으로 캡처해주세요'); return; }
@@ -1063,7 +1048,6 @@ $('#qrSaveBtn').onclick = async ()=>{
   }catch(e){ alert('저장 실패 😥 스크린샷으로 캡처해주세요'); console.warn(e); }
   btn.textContent=old; btn.disabled=false;
 };
-$('#qrPrintBtn').onclick = ()=> window.print();
 $('#qrBackLink').onclick = ()=>{ location.search=''; };
 $('#hostQrBtn').onclick  = ()=>{ location.search='?qr=1'; };
 
