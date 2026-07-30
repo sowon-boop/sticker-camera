@@ -383,7 +383,7 @@ const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
    3) 하나 위에 걸쳐 있으면 낮은 쪽으로 굴러 내려가 홈에 자리잡음  */
 try{ (function fillDome(){
   const dome=document.getElementById('dome');
-  const W=238, WALL=8, MAX_TOP=132, COUNT=26;
+  const W=238, WALL=8, MAX_TOP=140, COUNT=13;
   const placed=[];
 
   /* 이 x, 반지름 r 로 떨어뜨렸을 때 멈추는 높이(중심 y)와 받쳐주는 캡슐 */
@@ -402,7 +402,7 @@ try{ (function fillDome(){
 
   let guard=0;
   while(placed.length<COUNT && guard++<3000){
-    const r=15+Math.random()*3.5;
+    const r=22+Math.random()*4;
     let x=WALL+r+Math.random()*(W-2*(WALL+r));
     let s=drop(x,r);
 
@@ -429,7 +429,10 @@ try{ (function fillDome(){
     cap.style.left=p.x.toFixed(1)+'px';
     cap.style.bottom=(p.y-p.r).toFixed(1)+'px';
     cap.style.transform='translateX(-50%)';
-    cap.style.background=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
+    const t=(Math.random()*CAP_COLORS.length)|0;
+    let b=(Math.random()*CAP_COLORS.length)|0; if(b===t) b=(t+1)%CAP_COLORS.length;   // 위아래 다른 색
+    cap.style.background='linear-gradient(180deg,'+CAP_COLORS[t]+' 0 48%,'
+      +'rgba(0,0,0,.22) 48% 52%,'+CAP_COLORS[b]+' 52% 100%)';
     dome.appendChild(cap);
   });
 })(); }catch(e){ console.warn('돔 장식 실패(무시 가능):', e); }
