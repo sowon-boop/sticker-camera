@@ -490,7 +490,7 @@ function openCapsule(){
   crack(); capOut.classList.add('open'); hint.textContent='짠! 🎉';
   const p=pending; pending=null;
   recordDraw(p); updateStockUI();
-  setTimeout(()=>{ ding(); showResult(p); }, 520);
+  ding(); showResult(p);          // 열리는 동작과 동시에 팝업
 }
 capOut.addEventListener('click', openCapsule);
 function showResult(p){
