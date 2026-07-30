@@ -37,22 +37,28 @@
     animation:spinhint 3s linear infinite; pointer-events:none;}
   @keyframes spinhint{to{transform:rotate(360deg);}}
   .machine.busy .turnhint{display:none;}
+  /* overflow 를 걸면 캡슐이 배출구 안에 갇혀 잘린다 — 대신 캡슐이 나오기 전까지 opacity 로 감춘다 */
   .chute{width:96px; height:44px; margin:14px auto 0; background:#7a5c16; border-radius:10px;
-    box-shadow:inset 0 6px 10px rgba(0,0,0,.45); position:relative; overflow:hidden;}
+    box-shadow:inset 0 6px 10px rgba(0,0,0,.45); position:relative;}
   .chute .lip{position:absolute; left:0; right:0; bottom:0; height:12px; background:#5f4711; border-radius:0 0 8px 8px; z-index:4;}
 
   /* 캡슐 (두 반쪽) */
   .capOut{position:absolute; left:50%; top:4px; width:54px; height:54px; margin-left:-27px; z-index:3;
     transform:translateY(-78px); opacity:0;}
   .capOut.drop{animation:capdrop .7s cubic-bezier(.3,.8,.4,1.2) forwards;}
-  @keyframes capdrop{0%{transform:translateY(-80px) rotate(0); opacity:0;}25%{opacity:1;}
-    62%{transform:translateY(66px) rotate(14deg);}80%{transform:translateY(52px) rotate(-8deg);}100%{transform:translateY(60px) rotate(0);}}
-  /* 떨어진 캡슐을 앞으로 들어올려 한 번 보여준다 → 그 상태에서 열린다 */
+  /* 배출구 안(0~24px)에 있는 동안은 안 보이다가, 입구를 지나면서 나타난다 */
+  @keyframes capdrop{
+    0%{transform:translateY(-10px) rotate(0); opacity:0;}
+    30%{transform:translateY(16px) rotate(6deg); opacity:0;}
+    50%{transform:translateY(46px) rotate(12deg); opacity:1;}
+    75%{transform:translateY(70px) rotate(-8deg); opacity:1;}
+    100%{transform:translateY(60px) rotate(0); opacity:1;}}
+  /* 떨어진 캡슐을 앞으로 크게 들어올려 한 번 보여준다 → 그 상태에서 열린다 */
   .capOut.present{animation:cappresent .5s cubic-bezier(.2,1.5,.4,1) forwards;}
   @keyframes cappresent{
-    0%{transform:translateY(60px) scale(1); opacity:1;}
-    55%{transform:translateY(-2px) scale(1.42) rotate(-5deg);}
-    100%{transform:translateY(4px) scale(1.34) rotate(0); opacity:1;}}
+    0%{transform:translateY(60px) scale(1) rotate(0); opacity:1;}
+    55%{transform:translateY(48px) scale(1.36) rotate(-5deg);}
+    100%{transform:translateY(50px) scale(1.3) rotate(0); opacity:1;}}
   .half{position:absolute; left:0; width:54px; height:27px; transition:transform .45s cubic-bezier(.3,.9,.4,1.3);}
   .half.top{top:0; border-radius:27px 27px 0 0;}
   .half.bot{bottom:0; border-radius:0 0 27px 27px; background:#fff; box-shadow:inset 0 -3px 6px rgba(0,0,0,.12);}
