@@ -213,7 +213,8 @@
 
   /* ---- 캡슐 (배출) ---- */
   .capOut{
-    position:absolute; left:50%; top:4px; width:56px; height:56px; margin-left:-28px; z-index:3;
+    /* z-index 는 배출구 입술(4)·받침대보다 위 — 안 그러면 캡슐 윗부분이 가려진다 */
+    position:absolute; left:50%; top:4px; width:56px; height:56px; margin-left:-28px; z-index:9;
     transform:translateY(-78px); opacity:0; pointer-events:none;
   }
   .capOut.drop{animation:capdrop .7s cubic-bezier(.3,.8,.4,1.2) forwards;}
