@@ -1021,7 +1021,8 @@ function renderPreview(){
 }
 
 /* ---------- QR 응시 안내 포스터 ---------- */
-function baseUrl(){ return location.origin + location.pathname; }
+/* ?v= 는 폰에 남은 예전 버전 캐시를 무시하게 하는 용도 — 디자인 크게 바뀌면 숫자를 올린다 */
+function baseUrl(){ return location.origin + location.pathname + '?v=3'; }
 function drawQR(url){
   const box=$('#qrBox'); box.innerHTML='';
   const warn=$('#qrWarn'), isLocal=/^file:/i.test(url);
