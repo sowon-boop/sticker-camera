@@ -216,6 +216,10 @@ input::placeholder{color:#C4BDAC; font-family:"Gowun Batang",serif; font-weight:
   transition:background .15s, color .15s;
 }
 .opt .txt{flex:1;}
+/* 이름 없이 이미지만 보여주는 문항 — 크게 */
+.opt.imgonly{padding:9px 10px;}
+.opt.imgonly .optimg{flex:0 0 108px; width:108px; height:108px;}
+.opt.imgonly .txt{display:none;}
 /* 이미지 보기 — 배경 있는 그림과 없는 그림이 섞여도 같아 보이게 흰 칸 위에 얹는다 */
 .opt .optimg{
   flex:0 0 46px; width:46px; height:46px; object-fit:contain;
@@ -600,10 +604,10 @@ table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
    ============================================================ */
 const QUESTIONS = [
   { q:"신소원의 MBTI는?",
-    opts:["ISFP","INFP","ISFJ","ESFP"], a:0 },
+    opts:["ISFP","INFP","ISFJ","ISTP"], a:0 },
 
   { q:"신소원의 생일은?",
-    opts:["7월 22일","8월 12일","7월 30일","8월 2일"], a:3 },
+    opts:["8월 4일","8월 12일","7월 30일","8월 2일"], a:3 },
 
   { q:"신소원이 회사에 입사한 달은?",
     opts:["1월","7월","3월","9월"], a:2 },
@@ -631,7 +635,7 @@ const QUESTIONS = [
   { q:"다음 중 신소원이 지금 가장 갖고 싶어 하는 옷은?",
     opts:["퍼피 레이스 나시 (라이트 퍼플)","셔링 포켓 나시 (카키)","두두 레이어드 나시 (네이비)","플라워 반팔티 (브라운)"],
     imgs:["stickers/outfit/purple.jpg","stickers/outfit/khaki.jpg","stickers/outfit/navy.jpg","stickers/outfit/brown.jpg"],
-    a:1 },
+    imgOnly:true, a:1 },
 ];
 const OWNER = "신소원";
 const EXAM_DATE = "2026. 07. 30.";
@@ -852,6 +856,7 @@ function renderQ(isHost){
     item.opts.forEach((o,i)=>{
       const b=document.createElement('button');
       let cls='opt';
+      if(item.imgOnly) cls+=' imgonly';
       if(isHost) cls+=' static'+(i===item.a?' correct':'');
       else if(mine && mine.choice===i) cls+=' picked';   // 고른 것 표시하되 다른 보기는 계속 누를 수 있다
       b.className=cls;
@@ -907,7 +912,7 @@ function renderReveal(isHost){
     const who=got.filter(a=>a.choice===i);
     const d=document.createElement('div');
     const isMyWrong = mine && mine.choice===i && i!==item.a;
-    d.className='opt static '+(i===item.a?'correct':(isMyWrong?'wrongpick':(who.length?'':'dim')));
+    d.className='opt static '+(item.imgOnly?'imgonly ':'')+(i===item.a?'correct':(isMyWrong?'wrongpick':(who.length?'':'dim')));
     d.innerHTML=`<span class="bub">${CIRCLED[i]}</span>${optImg(item,i)}<span class="txt">${esc(o)}</span>`
       +`<span class="pickers">${who.map(a=>`<span class="chip">${esc(a.name)}</span>`).join('')}</span>`
       +`<span class="cnt">${who.length}</span>`;
