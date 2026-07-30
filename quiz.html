@@ -691,6 +691,7 @@ $('#metaCnt').textContent = TOTAL+'문항';
 function setStatus(state,txt){ $('#status').className='status'+(state?' '+state:''); $('#statusTxt').textContent=txt; }
 /* 서버 반영 여부에 따라 상태를 갱신 — 캐시만 보고 접수된 줄 알면 답안이 집계되지 않는다 */
 function refreshStatus(){
+  if(IS_PREVIEW || IS_QR) return;     // 검토·포스터 모드의 배지를 덮어쓰지 않는다
   if(window.__unsynced) setStatus('err','⚠️ 서버 반영 안 됨 — 연결 확인 중');
   else setStatus(IS_HOST?'host':'ok', IS_HOST?'🎤 감독관 모드':'시험장 연결 완료');
 }

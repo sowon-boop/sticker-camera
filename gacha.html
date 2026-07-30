@@ -44,11 +44,15 @@
   /* 캡슐 (두 반쪽) */
   .capOut{position:absolute; left:50%; top:4px; width:54px; height:54px; margin-left:-27px; z-index:3;
     transform:translateY(-78px); opacity:0;}
-  .capOut.drop{animation:capdrop 1s cubic-bezier(.3,.8,.4,1.2) forwards;}
+  .capOut.drop{animation:capdrop .7s cubic-bezier(.3,.8,.4,1.2) forwards;}
   @keyframes capdrop{0%{transform:translateY(-80px) rotate(0); opacity:0;}25%{opacity:1;}
     62%{transform:translateY(66px) rotate(14deg);}80%{transform:translateY(52px) rotate(-8deg);}100%{transform:translateY(60px) rotate(0);}}
-  .capOut.wobble{animation:capwob .32s ease-in-out infinite;}
-  @keyframes capwob{0%,100%{transform:translateY(60px) rotate(-9deg);}50%{transform:translateY(56px) rotate(9deg);}}
+  /* 떨어진 캡슐을 앞으로 들어올려 한 번 보여준다 → 그 상태에서 열린다 */
+  .capOut.present{animation:cappresent .5s cubic-bezier(.2,1.5,.4,1) forwards;}
+  @keyframes cappresent{
+    0%{transform:translateY(60px) scale(1); opacity:1;}
+    55%{transform:translateY(-2px) scale(1.42) rotate(-5deg);}
+    100%{transform:translateY(4px) scale(1.34) rotate(0); opacity:1;}}
   .half{position:absolute; left:0; width:54px; height:27px; transition:transform .45s cubic-bezier(.3,.9,.4,1.3);}
   .half.top{top:0; border-radius:27px 27px 0 0;}
   .half.bot{bottom:0; border-radius:0 0 27px 27px; background:#fff; box-shadow:inset 0 -3px 6px rgba(0,0,0,.12);}
@@ -73,10 +77,6 @@
     background:#FFF3CC; border:4px dashed var(--gold); color:var(--muted); font-size:13px; text-align:center; padding:10px;}
   .again{margin-top:18px; width:100%; padding:14px; border:none; border-radius:16px; font-family:inherit; font-size:16px; font-weight:800; color:#7a5618; background:var(--yellow); cursor:pointer;}
   .close{margin-top:8px; width:100%; padding:12px; border:2px solid var(--line); border-radius:16px; font-family:inherit; font-size:14px; font-weight:700; color:#8a7635; background:#FFF6DE; cursor:pointer;}
-  .whoin{margin-top:16px; width:100%; padding:13px; border:2.5px solid var(--line); border-radius:14px;
-    font-family:inherit; font-size:15px; text-align:center; color:var(--ink); background:#FFFCF3; outline:none;}
-  .whoin:focus{border-color:var(--pink); background:#fff;}
-  .whoin::placeholder{color:#D8C99C; font-size:13.5px;}
   .leftnote{margin-top:10px; font-size:13px; color:var(--muted);}
   .stock{margin-top:12px; font-size:14px; color:#9a8235; font-weight:700;}
   .tools{margin-top:10px; display:flex; gap:8px; justify-content:center;}
@@ -139,8 +139,7 @@ function remaining(){
   PRIZES.forEach(p=>{ const left=(p.qty||1)-takenCount(p.id); for(let i=0;i<left;i++) out.push(p); });
   return out;
 }
-function recordDraw(p){ const a=takenLog(); a.push({ id:p.id, name:p.name, who:'', ts:Date.now() }); saveLog(a); return a.length-1; }
-function setWho(rowIdx,who){ const a=takenLog(); if(a[rowIdx]){ a[rowIdx].who=who; saveLog(a); } }
+function recordDraw(p){ const a=takenLog(); a.push({ id:p.id, name:p.name, who:'', ts:Date.now() }); saveLog(a); }
 const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
 (function fillDome(){ const dome=document.getElementById('dome');
   for(let i=0;i<14;i++){ const c=document.createElement('span'); c.className='caps';
@@ -186,35 +185,31 @@ function dispense(){
   busy=true; machine.classList.add('busy'); hint.textContent='두구두구… 🥁';
   machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake');
   const prize=pickPrize(), col=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
-  const rowIdx=recordDraw(prize); updateStockUI();   // 같은 상품이 여러 개라 기록은 줄 번호로 구분
+  recordDraw(prize); updateStockUI();
   document.getElementById('capTop').style.background=col;
-  capOut.classList.remove('open','wobble'); capPrize.textContent=prize.emoji; capOut.style.transform=''; capOut.style.opacity='';
-  // 1) 캡슐 배출
+  capOut.classList.remove('open','present'); capPrize.textContent=prize.emoji; capOut.style.transform=''; capOut.style.opacity='';
+  // 1) 구멍에서 캡슐이 떨어진다
   capOut.classList.remove('drop'); void capOut.offsetWidth; capOut.classList.add('drop');
-  // 2) 두구두구 흔들림(긴장감)
-  setTimeout(()=>{ capOut.classList.remove('drop'); capOut.style.transform='translateY(60px)'; capOut.style.opacity='1'; capOut.classList.add('wobble'); hint.textContent='두구두구… 🥁'; }, 1000);
-  // 3) 뚜껑 열림
-  setTimeout(()=>{ capOut.classList.remove('wobble'); capOut.style.transform='translateY(60px)'; crack(); capOut.classList.add('open'); hint.textContent='짠! 🎉'; }, 1000+1200);
+  // 2) 캡슐을 앞으로 들어올려 보여준다
+  setTimeout(()=>{ capOut.classList.remove('drop'); capOut.classList.add('present'); hint.textContent='캡슐이 나왔다! 🥚'; }, 700);
+  // 3) 그 상태에서 뚜껑이 열린다
+  setTimeout(()=>{ crack(); capOut.classList.add('open'); hint.textContent='짠! 🎉'; }, 700+550);
   // 4) 상품 카드
-  setTimeout(()=>{ ding(); showResult(prize, rowIdx); }, 1000+1200+650);
+  setTimeout(()=>{ ding(); showResult(prize); }, 700+550+500);
 }
-function showResult(p, rowIdx){
+function showResult(p){
   const card=document.getElementById('prizecard');
   const photo = p.photo ? `<img class="photo" src="${p.photo}" alt="소원" onerror="this.outerHTML='<div class=\\'photo-ph\\'>여기에 소원 사진이 들어갈 예정 📸</div>'">` : '';
   const left = remaining().length;
-  const isMiss = p.id==='miss';
-  card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>`
-    + (isMiss ? '' : `<input class="whoin" id="whoIn" type="text" placeholder="받은 사람 이름 (나중에 주려고!)" maxlength="12" autocomplete="off">`)
-    + `<button class="again" id="nextBtn">다음 사람에게 넘기기 ➜</button>
-       <div class="leftnote">남은 캡슐 ${left}개</div>`;
+  card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>
+    <button class="again" id="nextBtn">다음 사람에게 넘기기 ➜</button>
+    <div class="leftnote">남은 캡슐 ${left}개</div>`;
   card.style.animation='none'; void card.offsetWidth; card.style.animation='';
   document.getElementById('result').classList.add('show');
-  const whoIn=document.getElementById('whoIn');
-  if(whoIn) whoIn.addEventListener('input', ()=> setWho(rowIdx, whoIn.value.trim()));
-  document.getElementById('nextBtn').onclick=()=>{ if(whoIn) setWho(rowIdx, whoIn.value.trim()); reset(); };
+  document.getElementById('nextBtn').onclick=reset;
 }
 function reset(){ document.getElementById('result').classList.remove('show');
-  capOut.classList.remove('drop','open','wobble'); capOut.style.transform=''; capOut.style.opacity='0';
+  capOut.classList.remove('drop','open','present'); capOut.style.transform=''; capOut.style.opacity='0';
   busy=false; machine.classList.remove('busy'); turned=0;
   updateStockUI();
   if(!remaining().length) soldOut(); else hint.textContent='👆 손잡이를 빙글 돌려봐!';
@@ -235,7 +230,7 @@ function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','
 document.getElementById('logBtn').onclick=()=>{
   const log=takenLog();
   const rows = log.length
-    ? log.map(e=>`<div class="logrow"><span class="lp">${esc(e.name)}</span><span class="lw">${e.who?esc(e.who):'—'}</span></div>`).join('')
+    ? log.map((e,i)=>`<div class="logrow"><span class="lw">${i+1}</span><span class="lp">${esc(e.name)}</span></div>`).join('')
     : `<div class="logempty">아직 아무도 안 뽑았어</div>`;
   document.getElementById('logCard').innerHTML =
     `<div class="pname" style="margin-top:0">📋 뽑힌 기록</div>
