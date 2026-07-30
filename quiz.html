@@ -233,6 +233,9 @@ input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-siz
   background:#FFF2D9; color:#C79A3C; font-family:"Jua",sans-serif; font-size:14px; transition:.18s;
 }
 .opt .txt{flex:1;}
+/* 이미지 보기 — 배경이 있는 그림과 없는 그림이 섞여도 같아 보이게 흰 타일 위에 얹는다 */
+.opt .optimg{flex:0 0 52px; width:52px; height:52px; object-fit:contain;
+  background:#fff; border:1.5px solid var(--line); border-radius:12px; padding:2px;}
 .opt:active{transform:translateY(4px); box-shadow:0 1px 0 #F4E9D6;}
 .opt.picked{border-color:var(--lav); background:#F6F2FF; box-shadow:0 4px 0 #DCD1FA;}
 .opt.picked .tag{background:var(--lav); color:#fff;}
@@ -535,6 +538,11 @@ const QUESTIONS = [
 
   { q:"신소원이 알바해본 곳이 아닌 곳은?",
     opts:["햄버거집","스크린야구장","카페","떡볶이집"], a:2 },
+
+  { q:"신소원이 동물의 숲에서 제일 좋아하는 주민은?",
+    opts:["쭈니","애플이","차둘","미첼"],
+    imgs:["stickers/acnh/jjuni.png","stickers/acnh/apple.png","stickers/acnh/chadul.png","stickers/acnh/michel.jpg"],
+    a:1 },
 ];
 const OWNER = "신소원";
 const PARTY_DATE = "2026.07.30";
@@ -767,7 +775,8 @@ function renderQ(isHost){
       if(isHost){ cls+=' static'+(i===item.a?' correct':''); }
       else if(mine && mine.choice===i){ cls+=' picked'; }   // 고른 것 표시하되 다른 보기는 계속 누를 수 있다
       b.className=cls;
-      b.innerHTML=`<span class="tag">${letter(i)}</span><span class="txt">${esc(o)}</span>`
+      const im = item.imgs && item.imgs[i] ? `<img class="optimg" src="${item.imgs[i]}" alt="">` : '';
+      b.innerHTML=`<span class="tag">${letter(i)}</span>${im}<span class="txt">${esc(o)}</span>`
                 + (isHost && i===item.a ? '<span class="mark">정답</span>' : '');
       if(!isHost) b.onclick=()=>pick(i);
       box.appendChild(b);
@@ -814,7 +823,8 @@ function renderReveal(isHost){
     const who = got.filter(a=>a.choice===i);
     const d=document.createElement('div');
     d.className = 'opt static '+(i===item.a?'correct':(who.length?'wrong':'dim'));
-    d.innerHTML = `<span class="tag">${letter(i)}</span><span class="txt">${esc(o)}</span>`
+    const im = item.imgs && item.imgs[i] ? `<img class="optimg" src="${item.imgs[i]}" alt="">` : '';
+    d.innerHTML = `<span class="tag">${letter(i)}</span>${im}<span class="txt">${esc(o)}</span>`
       + `<span class="chosen">${who.map(a=>avatar(a.name)).join('')}</span>`
       + `<span class="mark">${who.length}</span>`;
     box.appendChild(d);
