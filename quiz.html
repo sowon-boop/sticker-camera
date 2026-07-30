@@ -639,6 +639,8 @@ function initDB(){
 window.addEventListener('quizdb-ready', initDB);
 window.addEventListener('quizdb-error', ()=> setStatus('err', window.__quizErr||'서버 연결 실패'));
 $('#joinBtn').disabled=true;
+/* 연결이 늦어져도 버튼이 영영 죽은 채로 남지 않게 — 눌리면 이유라도 말해준다 */
+setTimeout(()=>{ if(!window.QuizDB) $('#joinBtn').disabled=false; }, 5000);
 if(window.QuizDB) initDB();
 
 /* ============================================================
@@ -659,8 +661,9 @@ function scoreboard(){
    참가 / 호스트 전환
    ============================================================ */
 $('#joinBtn').onclick = async ()=>{
-  const n=$('#nick').value.trim(); if(!n){ $('#nick').focus(); return; }
-  if(!window.QuizDB){ showErr('서버에 아직 연결이 안 됐어요. 새로고침해보세요.'); return; }
+  const n=$('#nick').value.trim();
+  if(!n){ showErr('이름을 먼저 입력해줘!'); $('#nick').focus(); return; }   // 조용히 무시하지 않는다
+  if(!window.QuizDB){ showErr('서버 연결 중이야 — 잠깐 뒤에 다시 눌러줘'); return; }
   myName=n; store.set('sowonquiz_name', n);
   $('#joinBtn').disabled=true; $('#joinBtn').textContent='참가 중… ⏳';
   try{
