@@ -381,7 +381,7 @@ const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
 /* 캡슐 쌓기 — 위에서 하나씩 떨어뜨려 쌓는다 (줄 맞춤 없음)
    1) 무작위 x 에서 낙하  2) 바닥/다른 캡슐에 닿으면 멈춤
    3) 하나 위에 걸쳐 있으면 낮은 쪽으로 굴러 내려가 홈에 자리잡음  */
-(function fillDome(){
+try{ (function fillDome(){
   const dome=document.getElementById('dome');
   const W=238, WALL=8, MAX_TOP=132, COUNT=26;
   const placed=[];
@@ -432,7 +432,11 @@ const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
     cap.style.background=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
     dome.appendChild(cap);
   });
-})();
+})(); }catch(e){ console.warn('돔 장식 실패(무시 가능):', e); }
+
+/* 뒤쪽에서 무슨 일이 생겨도 재고 숫자는 먼저 띄운다 */
+try{ const _el=document.getElementById('stock');
+  if(_el) _el.textContent=`🎁 남은 캡슐 ${remaining().length} / ${TOTAL_CAPSULES}개`; }catch(e){}
 
 /* ===== 사운드 ===== */
 let actx=null;
