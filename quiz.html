@@ -313,6 +313,53 @@ table.rank tr.me td{background:#FFF4F7;}
 table.rank tr.me td.nm::after{content:" (나)"; font-size:10px; color:var(--pink-d);}
 table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
 
+/* ============================================================
+   QR 응시 안내 포스터
+   ============================================================ */
+.qrframe{
+  position:relative; margin:14px 0 0; padding:22px 16px 18px;
+  border:2.5px double var(--rule); background:#FFFEF7; text-align:center;
+}
+/* 시험지 모서리 정렬 마크 */
+.qrframe .crop{position:absolute; width:14px; height:14px; border:2px solid var(--ink);}
+.qrframe .crop.tl{top:6px; left:6px; border-right:none; border-bottom:none;}
+.qrframe .crop.tr{top:6px; right:6px; border-left:none; border-bottom:none;}
+.qrframe .crop.bl{bottom:6px; left:6px; border-right:none; border-top:none;}
+.qrframe .crop.br{bottom:6px; right:6px; border-left:none; border-top:none;}
+
+.qrlabel{font-size:11.5px; letter-spacing:4px; color:var(--ink2); margin-bottom:12px;}
+/* padding 이 QR 의 여백(quiet zone) 역할을 한다 — 4모듈 미만이면 스캔이 안 된다 */
+.qrbox{
+  width:216px; height:216px; margin:0 auto; padding:26px; background:#fff;
+  border:1.5px solid var(--rule); display:grid; place-items:center;
+}
+.qrbox canvas,.qrbox img,.qrbox table{width:100%!important; height:100%!important; display:block;}
+.qrhint{margin-top:12px; font-size:13px; font-weight:700; letter-spacing:-.3px;}
+.qrwarn{
+  margin:10px auto 0; padding:8px 10px; max-width:100%;
+  border:1.5px solid var(--red); background:#FDF1F0;
+  font-size:12px; line-height:1.7; color:var(--red); font-weight:700;
+}
+.qrseal{
+  position:absolute; right:12px; bottom:10px; width:54px; height:54px; border-radius:50%;
+  border:2.5px solid var(--red); color:var(--red); display:grid; place-items:center;
+  font-size:10px; font-weight:700; line-height:1.25; text-align:center; letter-spacing:1px;
+  transform:rotate(-9deg); opacity:.85;
+}
+.rules{margin-top:14px; border:1px solid var(--rule2); background:#FCFAF3; padding:12px 13px;}
+.rules .rt{font-size:11.5px; letter-spacing:3px; color:var(--ink2); text-align:center; padding-bottom:8px; border-bottom:1px solid var(--rule2);}
+.rules ol{margin:10px 0 0; padding-left:0; list-style:none; font-size:12.5px; line-height:1.95; color:var(--ink2);}
+.rules ol li{display:flex; gap:7px; text-align:left;}
+.rules ol li b{color:var(--ink); flex:0 0 auto;}
+.rules .warn{color:var(--red); font-weight:700;}
+
+@media print{
+  body{background:#fff; padding:0;}
+  body::before{display:none;}
+  .paper{box-shadow:none; border:none;}
+  .status,.noprint{display:none!important;}
+}
+
 /* 문항 검토 */
 .pvq{margin:0 0 6px; font-size:16px; font-weight:700; line-height:1.6;}
 .pvq .n{color:var(--red); margin-right:4px;}
@@ -427,8 +474,48 @@ table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
         <div class="seats" id="hostList"></div>
       </div>
       <button class="btn" id="hostStartBtn">시험 시작 (전원 동시)</button>
+      <button class="btn line tiny" id="hostQrBtn">📄 QR 응시 안내 포스터</button>
       <button class="btn line tiny" id="hostResetBtn">기록 전체 초기화</button>
       <button class="linkish" id="playerLink">← 수험생 화면으로</button>
+    </div>
+  </div>
+
+  <!-- ============ 8. QR 응시 안내 포스터 (?qr=1) ============ -->
+  <div id="scQR" class="screen hidden">
+    <div class="pad">
+      <div class="sect">응 시 안 내</div>
+
+      <div class="qrframe" id="qrPoster">
+        <span class="crop tl"></span><span class="crop tr"></span>
+        <span class="crop bl"></span><span class="crop br"></span>
+
+        <div class="qrlabel">응 시 코 드</div>
+        <div class="qrbox" id="qrBox"></div>
+        <div class="qrhint">📷 카메라로 코드를 스캔하여 입실하십시오</div>
+        <div class="qrwarn noprint hidden" id="qrWarn"></div>
+
+        <div class="rules">
+          <div class="rt">수 험 생 유 의 사 항</div>
+          <ol>
+            <li><b>1.</b><span>코드를 스캔한 후 <b>성명</b>을 정확히 기입하십시오.</span></li>
+            <li><b>2.</b><span>전원이 입실하면 감독관의 신호로 <b>동시에</b> 시작됩니다.</span></li>
+            <li><b>3.</b><span>답을 마킹한 후 다른 수험생을 기다리면, 정답이 <b>다같이</b> 공개됩니다.</span></li>
+            <li><b>4.</b><span class="warn">부정행위(당사자에게 직접 질문) 시 0점 처리됩니다.</span></li>
+          </ol>
+        </div>
+
+        <div class="qrseal">신소원<br>인</div>
+      </div>
+
+      <div class="noprint">
+        <div class="sect">코 드 설 정</div>
+        <input type="text" id="qrInput" placeholder="시험지 주소(URL)를 붙여넣으세요">
+        <button class="btn" id="qrMakeBtn">이 주소로 코드 생성</button>
+        <button class="btn line" id="qrSaveBtn">포스터 이미지로 저장</button>
+        <button class="btn line tiny" id="qrPrintBtn">인쇄하기</button>
+        <p class="small">비워두면 지금 이 페이지 주소가 들어갑니다.</p>
+        <button class="linkish" id="qrBackLink">← 시험지로 돌아가기</button>
+      </div>
     </div>
   </div>
 
@@ -511,6 +598,7 @@ table.rank td.g{font-family:"Gaegu",cursive; font-weight:700;}
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 /* ============================================================
    문항 — a 는 정답 번호(0부터). 정답 위치는 A~D 에 고르게 분산되어 있다.
@@ -564,7 +652,7 @@ const COMMENTS = [
 const $ = s=>document.querySelector(s);
 const SCREENS = { join:$('#scJoin'), lobby:$('#scLobby'), q:$('#scQ'),
                   reveal:$('#scReveal'), final:$('#scFinal'), hostLobby:$('#scHostLobby'),
-                  preview:$('#scPreview') };
+                  preview:$('#scPreview'), qr:$('#scQR') };
 let currentScreen='';
 function show(name){
   if(currentScreen===name) return;
@@ -585,6 +673,7 @@ const store = {
    ============================================================ */
 const IS_HOST    = new URLSearchParams(location.search).has('host');
 const IS_PREVIEW = new URLSearchParams(location.search).has('preview');
+const IS_QR      = new URLSearchParams(location.search).has('qr');
 let myId = store.get('sowonexam_pid');
 if(!myId){ myId='p'+Math.random().toString(36).slice(2,10); store.set('sowonexam_pid',myId); }
 let seatNo = store.get('sowonexam_seat');
@@ -608,7 +697,7 @@ function refreshStatus(){
 window.addEventListener('quizdb-sync', refreshStatus);
 
 function initDB(){
-  if(IS_PREVIEW) return;              // 검토 화면은 DB 와 무관하게 문항만 보여준다
+  if(IS_PREVIEW || IS_QR) return;     // 검토·포스터 화면은 DB 와 무관하다
   if(!window.QuizDB) return;
   refreshStatus();
   $('#joinBtn').disabled=false;
@@ -699,7 +788,7 @@ async function pick(i){
    렌더
    ============================================================ */
 function render(){
-  if(!room) return;
+  if(!room || IS_QR || IS_PREVIEW) return;    // 포스터·검토 화면은 서버 상태에 흔들리지 않는다
   const phase=room.phase||'lobby';
   $('#metaName').textContent = IS_HOST ? '감독관' : (myName || '　');
   $('#metaNo').textContent   = IS_HOST ? '000000' : (joined ? seatNo : '　');
@@ -931,6 +1020,52 @@ function renderPreview(){
   }).join('') + `<div class="seatbox"><div class="cap">총 ${TOTAL}문항</div></div>`;
 }
 
+/* ---------- QR 응시 안내 포스터 ---------- */
+function baseUrl(){ return location.origin + location.pathname; }
+function drawQR(url){
+  const box=$('#qrBox'); box.innerHTML='';
+  const warn=$('#qrWarn'), isLocal=/^file:/i.test(url);
+  warn.classList.toggle('hidden', !isLocal);
+  if(isLocal){
+    warn.innerHTML='⚠️ 지금 코드는 <u>내 컴퓨터 안의 파일 경로</u>라서<br>다른 사람 폰에서는 열리지 않아요.<br>아래에 웹에 올린 주소를 넣어주세요.';
+  }
+  if(typeof QRCode!=='function'){
+    box.innerHTML='<span class="small">QR 라이브러리를 불러오지 못했어요<br>(인터넷 연결 확인)</span>';
+    return;
+  }
+  /* 오류정정 H — 인쇄물이 구겨지거나 일부 가려져도 읽힌다 */
+  new QRCode(box, {
+    text:url, width:400, height:400,
+    colorDark:'#1E1B16', colorLight:'#ffffff',
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+function initQR(){
+  const saved = store.get('sowonexam_url') || '';
+  $('#qrInput').value = saved;
+  drawQR(saved || baseUrl());
+}
+$('#qrMakeBtn').onclick = ()=>{
+  let v=$('#qrInput').value.trim();
+  if(v && !/^https?:\/\//i.test(v)) v='https://'+v;
+  store.set('sowonexam_url', v);
+  drawQR(v || baseUrl());
+};
+$('#qrSaveBtn').onclick = async ()=>{
+  const btn=$('#qrSaveBtn'), old=btn.textContent;
+  if(typeof html2canvas!=='function'){ alert('저장이 안 되네요 😥 스크린샷으로 캡처해주세요'); return; }
+  btn.textContent='생성 중…'; btn.disabled=true;
+  try{
+    const canvas=await html2canvas($('#qrPoster'), { scale:3, backgroundColor:'#FFFEF7', useCORS:true });
+    const a=document.createElement('a');
+    a.download='신소원영역_응시안내.png'; a.href=canvas.toDataURL('image/png'); a.click();
+  }catch(e){ alert('저장 실패 😥 스크린샷으로 캡처해주세요'); console.warn(e); }
+  btn.textContent=old; btn.disabled=false;
+};
+$('#qrPrintBtn').onclick = ()=> window.print();
+$('#qrBackLink').onclick = ()=>{ location.search=''; };
+$('#hostQrBtn').onclick  = ()=>{ location.search='?qr=1'; };
+
 /* ---------- 저장 / 컨페티 ---------- */
 async function saveCard(){
   const btn=$('#saveImgBtn'), old=btn.textContent;
@@ -958,6 +1093,13 @@ function confetti(){
 }
 
 if(IS_PREVIEW){ setStatus('host','📝 출제자 검토 모드'); renderPreview(); show('preview'); }
+if(IS_QR){
+  setStatus('', '📄 응시 안내 (프로젝터·인쇄용)');
+  $('#metaName').textContent='　'; $('#metaNo').textContent='　';
+  show('qr');
+  if(document.readyState==='loading') window.addEventListener('DOMContentLoaded', initQR);
+  else initQR();
+}
 </script>
 </body>
 </html>
