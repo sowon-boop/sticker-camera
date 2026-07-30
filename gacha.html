@@ -115,28 +115,32 @@
   <div class="result" id="result"><div class="prizecard" id="prizecard"></div></div>
 
 <script>
-/* ===== 가챠 상품 — 각 1개씩만 있고, 뽑히면 사라진다 (id 는 저장용이라 바꾸지 말 것) ===== */
+/* ===== 가챠 상품 — qty 만큼 캡슐이 들어있고, 뽑히면 그만큼 줄어든다
+       (id 는 저장용이라 바꾸지 말 것 / 총 캡슐 = qty 합계) ===== */
 const PRIZES = [
-  { id:"love",    emoji:"💖", name:"소원의 사랑",        desc:"무한대의 사랑을 드립니다 (환불 불가)" },
-  { id:"haidilao",emoji:"🌶️", name:"하이디라오 만원 할인권", desc:"소원이가 마라 쏜다!" },
-  { id:"letter",  emoji:"📝", name:"소원이의 손편지",     desc:"직접 써서 보내줌" },
-  { id:"jelly",   emoji:"🍬", name:"젤리",              desc:"달달한 젤리 한 봉지!" },
-  { id:"photo",   emoji:"📸", name:"소원 포토카드",       desc:"소원이 실물 사진 획득! 💖", photo:"images/sowon.jpg" },
-  { id:"coffee",  emoji:"☕", name:"커피 쿠폰",          desc:"소원이가 커피 한 잔 쏜다!" },
-  { id:"baemin",  emoji:"🛵", name:"배달의민족 쿠폰",     desc:"소원이가 배달 쏜다!" },
-  { id:"snack",   emoji:"🍫", name:"간식 하나",          desc:"원하는 간식 하나 골라!" },
-  { id:"twoshot", emoji:"🫶", name:"소원이랑 투샷",       desc:"소원이랑 투샷 찍을 권리!" },
-  { id:"errand",  emoji:"🙇", name:"소원이 심부름권",     desc:"뭐든 하나 시켜도 됨 (1회)" },
-  { id:"meal",    emoji:"🍜", name:"밥 한 끼",           desc:"소원이가 밥 산다!" },
+  { id:"haidilao10", emoji:"🌶️", name:"하이디라오 식사 지원 쿠폰",  desc:"1만원권 — 소원이가 마라 쏜다!", qty:1 },
+  { id:"haidilao5",  emoji:"🌶️", name:"하이디라오 식사 지원 쿠폰",  desc:"5천원권 — 소원이가 마라 보탠다!", qty:1 },
+  { id:"jelly",      emoji:"🍬", name:"젤리",                   desc:"달달한 젤리 한 봉지!", qty:2 },
+  { id:"choco",      emoji:"🍫", name:"초콜릿",                  desc:"달콤한 초콜릿 하나!", qty:1 },
+  { id:"letter",     emoji:"📝", name:"소원이의 손편지",           desc:"직접 써서 보내줌", qty:1 },
+  { id:"candy",      emoji:"🍭", name:"사탕",                    desc:"입이 심심할 때 하나!", qty:1 },
+  { id:"miss",       emoji:"😜", name:"꽝!",                     desc:"다음 생에 만나요…", qty:2 },
 ];
+const TOTAL_CAPSULES = PRIZES.reduce((s,p)=>s+(p.qty||1), 0);
 
-/* ===== 재고 — 이 기기에 저장. 뽑힌 상품은 다시 안 나온다 ===== */
-const STORE_KEY='sowon_gacha_taken_v1';
+/* ===== 재고 — 이 기기에 저장. 수량만큼만 나오고 소진되면 사라진다 ===== */
+const STORE_KEY='sowon_gacha_taken_v2';
 function takenLog(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); }catch(e){ return []; } }
 function saveLog(a){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(a)); }catch(e){} }
-function remaining(){ const t=new Set(takenLog().map(x=>x.id)); return PRIZES.filter(p=>!t.has(p.id)); }
-function recordDraw(p){ const a=takenLog(); a.push({ id:p.id, name:p.name, who:'', ts:Date.now() }); saveLog(a); }
-function setWho(id,who){ const a=takenLog(); const e=a.find(x=>x.id===id); if(e){ e.who=who; saveLog(a); } }
+function takenCount(id){ return takenLog().filter(x=>x.id===id).length; }
+/* 남은 캡슐을 낱개로 펼친다 — 젤리 2개면 젤리가 두 번 들어가서 그만큼 잘 나온다 */
+function remaining(){
+  const out=[];
+  PRIZES.forEach(p=>{ const left=(p.qty||1)-takenCount(p.id); for(let i=0;i<left;i++) out.push(p); });
+  return out;
+}
+function recordDraw(p){ const a=takenLog(); a.push({ id:p.id, name:p.name, who:'', ts:Date.now() }); saveLog(a); return a.length-1; }
+function setWho(rowIdx,who){ const a=takenLog(); if(a[rowIdx]){ a[rowIdx].who=who; saveLog(a); } }
 const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
 (function fillDome(){ const dome=document.getElementById('dome');
   for(let i=0;i<14;i++){ const c=document.createElement('span'); c.className='caps';
@@ -182,7 +186,7 @@ function dispense(){
   busy=true; machine.classList.add('busy'); hint.textContent='두구두구… 🥁';
   machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake');
   const prize=pickPrize(), col=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
-  recordDraw(prize); updateStockUI();
+  const rowIdx=recordDraw(prize); updateStockUI();   // 같은 상품이 여러 개라 기록은 줄 번호로 구분
   document.getElementById('capTop').style.background=col;
   capOut.classList.remove('open','wobble'); capPrize.textContent=prize.emoji; capOut.style.transform=''; capOut.style.opacity='';
   // 1) 캡슐 배출
@@ -192,21 +196,22 @@ function dispense(){
   // 3) 뚜껑 열림
   setTimeout(()=>{ capOut.classList.remove('wobble'); capOut.style.transform='translateY(60px)'; crack(); capOut.classList.add('open'); hint.textContent='짠! 🎉'; }, 1000+1200);
   // 4) 상품 카드
-  setTimeout(()=>{ ding(); showResult(prize); }, 1000+1200+650);
+  setTimeout(()=>{ ding(); showResult(prize, rowIdx); }, 1000+1200+650);
 }
-function showResult(p){
+function showResult(p, rowIdx){
   const card=document.getElementById('prizecard');
   const photo = p.photo ? `<img class="photo" src="${p.photo}" alt="소원" onerror="this.outerHTML='<div class=\\'photo-ph\\'>여기에 소원 사진이 들어갈 예정 📸</div>'">` : '';
   const left = remaining().length;
-  card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>
-    <input class="whoin" id="whoIn" type="text" placeholder="받은 사람 이름 (나중에 주려고!)" maxlength="12" autocomplete="off">
-    <button class="again" id="nextBtn">다음 사람에게 넘기기 ➜</button>
-    <div class="leftnote">남은 상품 ${left}개</div>`;
+  const isMiss = p.id==='miss';
+  card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>`
+    + (isMiss ? '' : `<input class="whoin" id="whoIn" type="text" placeholder="받은 사람 이름 (나중에 주려고!)" maxlength="12" autocomplete="off">`)
+    + `<button class="again" id="nextBtn">다음 사람에게 넘기기 ➜</button>
+       <div class="leftnote">남은 캡슐 ${left}개</div>`;
   card.style.animation='none'; void card.offsetWidth; card.style.animation='';
   document.getElementById('result').classList.add('show');
   const whoIn=document.getElementById('whoIn');
-  whoIn.addEventListener('input', ()=> setWho(p.id, whoIn.value.trim()));
-  document.getElementById('nextBtn').onclick=()=>{ setWho(p.id, whoIn.value.trim()); reset(); };
+  if(whoIn) whoIn.addEventListener('input', ()=> setWho(rowIdx, whoIn.value.trim()));
+  document.getElementById('nextBtn').onclick=()=>{ if(whoIn) setWho(rowIdx, whoIn.value.trim()); reset(); };
 }
 function reset(){ document.getElementById('result').classList.remove('show');
   capOut.classList.remove('drop','open','wobble'); capOut.style.transform=''; capOut.style.opacity='0';
@@ -222,7 +227,7 @@ function soldOut(){
 function updateStockUI(){
   const left=remaining().length;
   const el=document.getElementById('stock');
-  if(el) el.textContent = left ? `🎁 남은 상품 ${left} / ${PRIZES.length}개` : '🎁 상품 모두 소진';
+  if(el) el.textContent = left ? `🎁 남은 캡슐 ${left} / ${TOTAL_CAPSULES}개` : '🎁 캡슐 모두 소진';
 }
 
 /* ===== 뽑힌 기록 / 초기화 ===== */
@@ -240,7 +245,7 @@ document.getElementById('logBtn').onclick=()=>{
   document.getElementById('logClose').onclick=()=> document.getElementById('logView').classList.remove('show');
 };
 document.getElementById('resetBtn').onclick=()=>{
-  if(!confirm('뽑힌 기록을 전부 지우고 상품 11개를 다시 채울까?')) return;
+  if(!confirm(`뽑힌 기록을 전부 지우고 캡슐 ${TOTAL_CAPSULES}개를 다시 채울까?`)) return;
   saveLog([]); reset(); machine.classList.remove('busy');
   hint.textContent='👆 손잡이를 빙글 돌려봐!'; updateStockUI();
 };
