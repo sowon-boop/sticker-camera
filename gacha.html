@@ -503,7 +503,7 @@ function showResult(p){
   const photo = p.photo ? `<img class="photo" src="${p.photo}" alt="소원" onerror="this.outerHTML='<div class=\\'photo-ph\\'>여기에 소원 사진이 들어갈 예정 📸</div>'">` : '';
   const left = remaining().length;
   card.innerHTML = `<div class="big">${p.emoji}</div>${photo}<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>
-    <button class="again" id="nextBtn">다음 사람에게 넘기기 ➜</button>
+    <button class="again" id="nextBtn">다시하기 🔄</button>
     <div class="leftnote">남은 캡슐 ${left}개</div>`;
   card.style.animation='none'; void card.offsetWidth; card.style.animation='';
   document.getElementById('result').classList.add('show');
