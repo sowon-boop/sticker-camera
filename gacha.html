@@ -4,108 +4,328 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="theme-color" content="#FFE9AE">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
 <title>소원 가챠 🎰</title>
 <style>
-  :root{ --bg:#FFF3CC; --card:#fff; --ink:#7A6533; --muted:#C7B888; --line:#F4ECD6;
-    --yellow:#FFCF45; --yellow2:#FFB03A; --pink:#FF9CB4; --mint:#8FE3C6; --gold:#F0B429; }
+  :root{
+    /* 배경 : 차분한 라벤더 그레이 */
+    --bg:#C9C4DE; --bg-hi:#F2F0F8; --bg-lo:#A9A2C8;
+    --card:#fff;
+    --ink:#544D66; --ink2:#7B7392; --muted:#A9A2BC; --line:#E9E6F2;
+    /* 기계 몸통 : 아이보리 */
+    --iv-hi:#FFFFFF; --iv:#FBF7EF; --iv-mid:#F2ECDF; --iv-lo:#CFC7B6; --iv-dd:#A79E8A;
+    /* 포인트 : 더스티 핑크 */
+    --pink:#F0A0B6; --pink-d:#D9748F; --pink-dd:#B85974;
+    --mint:#8FE3C6; --gold:#F0B429;
+  }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0;}
-  body{font-family:"Jua",system-ui,sans-serif; background:var(--bg); color:var(--ink);
-    min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:18px; overflow:hidden; touch-action:none;}
-  .wrap{width:100%; max-width:420px; text-align:center;}
-  h1{font-size:26px; color:#6b5220; margin-bottom:4px;}
-  .sub{color:var(--muted); font-size:14px; margin-bottom:18px;}
+  body{
+    font-family:"Jua",system-ui,sans-serif; color:var(--ink);
+    min-height:100dvh; display:flex; align-items:center; justify-content:center;
+    padding:18px; overflow:hidden; touch-action:none;
+    background:
+      radial-gradient(900px 640px at 50% 4%, var(--bg-hi) 0%, rgba(242,240,248,0) 60%),
+      radial-gradient(760px 540px at 50% 110%, var(--bg-lo) 0%, rgba(169,162,200,0) 64%),
+      var(--bg);
+  }
+  /* 바닥 그림자 → 기계가 바닥에 놓인 느낌 */
+  body::after{
+    content:""; position:fixed; inset:0; pointer-events:none;
+    background:radial-gradient(120% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(60,50,90,.22) 100%);
+  }
+  .wrap{width:100%; max-width:420px; text-align:center; position:relative; z-index:1;}
+  h1{font-size:26px; color:#4A4360; margin-bottom:4px; text-shadow:0 2px 0 rgba(255,255,255,.75), 0 4px 10px rgba(60,50,90,.20);}
+  .sub{color:#6E6689; font-size:14px; margin-bottom:22px;}
 
-  .machine{width:236px; margin:0 auto; position:relative; user-select:none;}
+  /* ==========================================================
+     가챠 기계 — 입체
+     ========================================================== */
+  .stage{position:relative; width:262px; margin:0 auto; padding-bottom:26px;}
+  /* 기계가 드리우는 바닥 그림자 */
+  .stage::after{
+    content:""; position:absolute; left:50%; bottom:6px; transform:translateX(-50%);
+    width:210px; height:26px; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(55,45,85,.42), rgba(55,45,85,0));
+    filter:blur(1px);
+  }
+  .machine{position:relative; user-select:none; z-index:2;}
   .machine.shake{animation:shake .5s ease;}
   @keyframes shake{10%,90%{transform:translateX(-2px);}30%,50%,70%{transform:translateX(-5px) rotate(-1deg);}40%,60%{transform:translateX(5px) rotate(1deg);}}
-  .dome{position:relative; height:168px; border-radius:120px 120px 22px 22px;
-    background:radial-gradient(circle at 40% 30%, rgba(255,255,255,.9), rgba(255,255,255,.35) 45%, rgba(255,255,255,.12) 70%);
-    border:5px solid #fff; box-shadow:inset 0 -8px 18px rgba(0,0,0,.06), 0 8px 16px rgba(240,180,41,.25); overflow:hidden;}
-  .caps{position:absolute; border-radius:50%;}
-  .body{background:var(--yellow); border-radius:14px; margin-top:-10px; padding:16px 16px 14px; border:5px solid #fff;
-    box-shadow:0 10px 22px rgba(240,180,41,.35); position:relative;}
-  .slot{width:70px; height:12px; background:#8a6a1e; border-radius:6px; margin:2px auto 12px;}
-  .knobwrap{position:relative; width:78px; margin:0 auto;}
-  .knob{width:66px; height:66px; border-radius:50%; margin:0 auto; background:#fff; border:5px solid #ffe6a8;
-    position:relative; box-shadow:0 4px 10px rgba(0,0,0,.12); cursor:grab; touch-action:none;}
+
+  /* ---- 유리 돔 ---- */
+  .dome{
+    position:relative; height:184px; margin:0 12px;
+    border-radius:132px 132px 20px 20px;
+    background:
+      radial-gradient(120% 90% at 30% 18%, rgba(255,255,255,.95) 0%, rgba(255,255,255,.42) 26%, rgba(255,255,255,.10) 52%, rgba(255,255,255,0) 70%),
+      radial-gradient(90% 70% at 78% 82%, rgba(200,190,235,.35), rgba(200,190,235,0) 70%),
+      linear-gradient(180deg, rgba(255,255,255,.34), rgba(170,162,200,.22));
+    border:none;
+    box-shadow:
+      inset 0 0 0 5px rgba(255,255,255,.95),          /* 유리 테두리 */
+      inset 6px 0 18px -6px rgba(70,60,100,.28),      /* 좌측 곡률 음영 */
+      inset -10px 0 22px -8px rgba(70,60,100,.32),    /* 우측 곡률 음영 */
+      inset 0 -14px 22px -10px rgba(70,60,100,.28),   /* 하단 음영 */
+      0 10px 22px rgba(60,50,90,.22);
+    overflow:hidden;
+  }
+  /* 캡슐 뒤쪽 : 돔 안쪽 깊이감 (캡슐보다 아래에 깔림) */
+  .dome::before{
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:
+      radial-gradient(70% 40% at 50% 104%, rgba(60,50,95,.40), rgba(60,50,95,0) 72%),
+      radial-gradient(85% 70% at 50% 30%, rgba(70,60,100,.16), rgba(70,60,100,0) 70%);
+  }
+  /* 유리 표면 : 반사광 + 구면 음영 (캡슐보다 위에 덮임) */
+  .dome::after{
+    content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+    background:
+      /* 큰 반사광 (왼쪽 위) */
+      radial-gradient(38% 26% at 25% 15%, rgba(255,255,255,.98) 0%, rgba(255,255,255,.42) 46%, rgba(255,255,255,0) 74%),
+      /* 작은 스펙큘러 점 */
+      radial-gradient(8% 5% at 63% 11%, rgba(255,255,255,.95), rgba(255,255,255,0) 72%),
+      /* 오른쪽 아래 림 라이트 */
+      radial-gradient(30% 34% at 88% 66%, rgba(255,255,255,.55), rgba(255,255,255,0) 72%),
+      /* 바닥 반사광 */
+      radial-gradient(58% 18% at 50% 95%, rgba(255,255,255,.45), rgba(255,255,255,0) 74%),
+      /* 구면 : 가장자리로 갈수록 어둡게 */
+      radial-gradient(76% 68% at 40% 36%, rgba(70,60,100,0) 56%, rgba(70,60,100,.22) 84%, rgba(70,60,100,.40) 100%);
+    animation:shimmer 6s ease-in-out infinite;
+  }
+  @keyframes shimmer{0%,100%{opacity:1;}50%{opacity:.88;}}
+  /* 유리 두께 : 흰 테두리 안쪽에 한 겹 더 */
+  .glassedge{
+    position:absolute; inset:5px; border-radius:127px 127px 16px 16px; pointer-events:none; z-index:6;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.55), inset 0 0 14px rgba(70,60,100,.22);
+  }
+  /* 캡슐 (JS가 배경색만 인라인으로 넣음) */
+  .caps{
+    position:absolute; border-radius:50%;
+    box-shadow:
+      inset 0 -6px 10px rgba(0,0,0,.28),
+      inset 0 4px 6px rgba(255,255,255,.55),
+      0 3px 6px rgba(90,60,10,.28);
+  }
+  .caps::before{
+    content:""; position:absolute; left:20%; top:14%; width:32%; height:26%;
+    border-radius:50%; background:rgba(255,255,255,.9); filter:blur(1px);
+  }
+  /* 캡슐 아래쪽 그늘 → 서로 겹쳐 쌓인 느낌 */
+  .caps::after{
+    content:""; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+    background:radial-gradient(70% 60% at 38% 30%, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 46%),
+               radial-gradient(90% 80% at 62% 82%, rgba(40,30,70,.34), rgba(40,30,70,0) 62%);
+  }
+  /* 깊이별 밝기 차이 */
+  .caps:nth-child(3n){filter:brightness(.90) saturate(.95);}
+  .caps:nth-child(4n){filter:brightness(1.05);}
+  .caps:nth-child(5n){filter:brightness(.84) saturate(.9);}
+
+  /* ---- 돔과 본체 사이 금속 링 ---- */
+  .neck{
+    height:16px; margin:-6px 4px 0; border-radius:6px;
+    background:linear-gradient(90deg,#A79B7E 0%, #FFFFFF 16%, #EFE7D2 42%, #FFFFFF 58%, #C4B896 86%, #8F8467 100%);
+    box-shadow:0 4px 8px rgba(120,80,10,.30), inset 0 -2px 3px rgba(0,0,0,.20), inset 0 2px 0 rgba(255,255,255,.9);
+  }
+
+  /* ---- 본체 ---- */
+  .body{
+    position:relative; margin:0 0 0; padding:18px 18px 16px; border-radius:16px;
+    /* 좌우 어둡게 → 원통 느낌 */
+    background:linear-gradient(90deg,
+      var(--iv-dd) 0%, var(--iv-lo) 5%, var(--iv-hi) 20%, var(--iv) 46%,
+      var(--iv-mid) 66%, var(--iv-lo) 86%, var(--iv-dd) 100%);
+    box-shadow:
+      inset 0 3px 0 rgba(255,255,255,.85),
+      inset 0 -10px 16px rgba(110,95,70,.28),
+      0 14px 26px rgba(60,50,90,.30);
+  }
+  /* 본체 상단 광택 띠 */
+  .body::before{
+    content:""; position:absolute; left:14px; right:14px; top:6px; height:16px; border-radius:10px;
+    background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0));
+    pointer-events:none;
+  }
+
+  /* 동전 투입구 */
+  .slot{
+    width:74px; height:13px; margin:2px auto 14px; border-radius:7px;
+    background:linear-gradient(180deg,#4A4459,#6E6683);
+    box-shadow:inset 0 3px 5px rgba(0,0,0,.55), 0 1.5px 0 rgba(255,255,255,.8);
+  }
+
+  /* 손잡이 */
+  .knobwrap{position:relative; width:86px; margin:0 auto;}
+  .knob{
+    width:70px; height:70px; border-radius:50%; margin:0 auto; position:relative;
+    background:
+      radial-gradient(circle at 34% 28%, #FFFFFF 0%, #FBF4E0 38%, #E4D8B8 68%, #B5A784 100%);
+    box-shadow:
+      0 6px 12px rgba(110,70,10,.42),
+      inset 0 -5px 9px rgba(120,90,30,.35),
+      inset 0 4px 6px rgba(255,255,255,.95);
+    cursor:grab; touch-action:none;
+  }
   .knob:active{cursor:grabbing;}
-  .knob::before{content:""; position:absolute; inset:13px; border-radius:50%; background:var(--yellow2);}
-  .knob::after{content:""; position:absolute; left:50%; top:7px; width:7px; height:24px; background:#fff; border-radius:4px; transform:translateX(-50%);}
-  .turnhint{position:absolute; inset:-10px; border-radius:50%; border:3px dashed rgba(240,180,41,.55);
-    animation:spinhint 3s linear infinite; pointer-events:none;}
+  /* 안쪽 원판 */
+  .knob::before{
+    content:""; position:absolute; inset:12px; border-radius:50%;
+    background:radial-gradient(circle at 36% 30%, #FFC6D5 0%, var(--pink) 46%, var(--pink-dd) 100%);
+    box-shadow:inset 0 -4px 8px rgba(120,45,70,.45), inset 0 3px 5px rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.18);
+  }
+  /* 돌리는 막대 */
+  .knob::after{
+    content:""; position:absolute; left:50%; top:8px; width:9px; height:54px; border-radius:5px;
+    transform:translateX(-50%);
+    background:linear-gradient(90deg,#D9CFB4 0%, #FFFFFF 35%, #FFFFFF 55%, #C7BC9C 100%);
+    box-shadow:0 2px 5px rgba(80,50,0,.45), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  .turnhint{
+    position:absolute; inset:-11px; border-radius:50%; border:3px dashed rgba(217,116,143,.55);
+    animation:spinhint 3s linear infinite; pointer-events:none;
+  }
   @keyframes spinhint{to{transform:rotate(360deg);}}
   .machine.busy .turnhint{display:none;}
-  /* overflow 를 걸면 캡슐이 배출구 안에 갇혀 잘린다 — 대신 캡슐이 나오기 전까지 opacity 로 감춘다 */
-  .chute{width:96px; height:44px; margin:14px auto 0; background:#7a5c16; border-radius:10px;
-    box-shadow:inset 0 6px 10px rgba(0,0,0,.45); position:relative;}
-  .chute .lip{position:absolute; left:0; right:0; bottom:0; height:12px; background:#5f4711; border-radius:0 0 8px 8px; z-index:4;}
 
-  /* 캡슐 (두 반쪽) */
-  /* pointer-events:none 필수 — 안 그러면 대기 중인 투명 캡슐이 손잡이 위를 덮어 드래그를 가로챈다 */
-  .capOut{position:absolute; left:50%; top:4px; width:54px; height:54px; margin-left:-27px; z-index:3;
-    transform:translateY(-78px); opacity:0; pointer-events:none;}
+  /* 배출구 */
+  .chute{
+    width:104px; height:48px; margin:16px auto 0; border-radius:11px; position:relative;
+    background:linear-gradient(180deg,#2B2636 0%, #4B4459 55%, #35303F 100%);
+    box-shadow:
+      inset 0 9px 14px rgba(0,0,0,.72),
+      inset 0 -3px 5px rgba(255,255,255,.10),
+      0 2px 0 rgba(255,255,255,.65);
+  }
+  .chute .lip{
+    position:absolute; left:0; right:0; bottom:0; height:14px; z-index:4; border-radius:0 0 9px 9px;
+    background:linear-gradient(180deg,#3A3446,#221E2C);
+    box-shadow:inset 0 3px 5px rgba(0,0,0,.5), 0 -1px 0 rgba(255,255,255,.10);
+  }
+
+  /* 받침대 */
+  .base{
+    height:20px; margin:0 -4px; border-radius:0 0 12px 12px;
+    background:linear-gradient(90deg,#6E6683 0%, #8C849F 18%, #A79FB8 50%, #857D98 82%, #625A76 100%);
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.35), inset 0 -6px 10px rgba(0,0,0,.30), 0 8px 16px rgba(60,50,90,.35);
+  }
+
+  /* ---- 캡슐 (배출) ---- */
+  .capOut{
+    position:absolute; left:50%; top:4px; width:56px; height:56px; margin-left:-28px; z-index:3;
+    transform:translateY(-78px); opacity:0; pointer-events:none;
+  }
   .capOut.drop{animation:capdrop .7s cubic-bezier(.3,.8,.4,1.2) forwards;}
-  /* 배출구 안(0~24px)에 있는 동안은 안 보이다가, 입구를 지나면서 나타난다 */
+  /* 배출구 안에서는 안 보이다가 입구를 지나며 나타난다 */
   @keyframes capdrop{
     0%{transform:translateY(-10px) rotate(0); opacity:0;}
-    30%{transform:translateY(16px) rotate(6deg); opacity:0;}
-    50%{transform:translateY(46px) rotate(12deg); opacity:1;}
-    75%{transform:translateY(70px) rotate(-8deg); opacity:1;}
-    100%{transform:translateY(60px) rotate(0); opacity:1;}}
-  /* 떨어진 캡슐을 앞으로 크게 들어올려 한 번 보여준다 → 그 상태에서 열린다 */
+    30%{transform:translateY(18px) rotate(6deg); opacity:0;}
+    50%{transform:translateY(64px) rotate(12deg); opacity:1;}
+    75%{transform:translateY(108px) rotate(-8deg); opacity:1;}
+    100%{transform:translateY(98px) rotate(0); opacity:1;}
+  }
+  /* 앞으로 크게 들어올려 한 번 보여준다 */
   .capOut.present{animation:cappresent .5s cubic-bezier(.2,1.5,.4,1) forwards;}
   @keyframes cappresent{
-    0%{transform:translateY(60px) scale(1) rotate(0); opacity:1;}
-    55%{transform:translateY(48px) scale(1.36) rotate(-5deg);}
-    100%{transform:translateY(50px) scale(1.3) rotate(0); opacity:1;}}
-  /* 열 수 있는 상태 — 톡톡 부풀며 "눌러봐" 신호. 이때만 클릭을 받는다 */
-  .capOut.present.tappable{
-    animation:cappulse 1.1s ease-in-out infinite;
-    pointer-events:auto; cursor:pointer;}
+    0%{transform:translateY(98px) scale(1) rotate(0); opacity:1;}
+    55%{transform:translateY(86px) scale(1.34) rotate(-5deg); opacity:1;}
+    100%{transform:translateY(88px) scale(1.28) rotate(0); opacity:1;}
+  }
+  /* 누를 수 있는 상태 — 톡톡 부풀며 신호. 이때만 클릭을 받는다 */
+  .capOut.present.tappable{animation:cappulse 1.1s ease-in-out infinite; pointer-events:auto; cursor:pointer;}
   @keyframes cappulse{
-    0%,100%{transform:translateY(50px) scale(1.3); opacity:1;}
-    50%{transform:translateY(45px) scale(1.38); opacity:1;}}
-  /* 열리는 순간 부풀기를 멈추고 그 자리에 고정 */
-  .capOut.present.open{animation:none; transform:translateY(50px) scale(1.3); opacity:1;}
+    0%,100%{transform:translateY(88px) scale(1.28); opacity:1;}
+    50%{transform:translateY(83px) scale(1.36); opacity:1;}
+  }
+  /* 열리는 순간 부풀기를 멈추고 고정 */
+  .capOut.present.open{animation:none; transform:translateY(88px) scale(1.28); opacity:1;}
   .tapring{
-    position:absolute; inset:-14px; border-radius:50%; border:3px dashed rgba(240,180,41,.75);
+    position:absolute; inset:-14px; border-radius:50%; border:3px dashed rgba(217,116,143,.8);
     animation:spinhint 3s linear infinite; pointer-events:none; opacity:0; transition:opacity .2s;}
   .capOut.tappable .tapring{opacity:1;}
-  .half{position:absolute; left:0; width:54px; height:27px; transition:transform .45s cubic-bezier(.3,.9,.4,1.3);}
-  .half.top{top:0; border-radius:27px 27px 0 0;}
-  .half.bot{bottom:0; border-radius:0 0 27px 27px; background:#fff; box-shadow:inset 0 -3px 6px rgba(0,0,0,.12);}
-  .capOut.open .half.top{transform:translateY(-40px) rotate(-24deg);}
+  .half{position:absolute; left:0; width:56px; height:28px; transition:transform .45s cubic-bezier(.3,.9,.4,1.3);}
+  .half.top{
+    top:0; border-radius:28px 28px 0 0; overflow:hidden;
+    box-shadow:inset 0 5px 7px rgba(255,255,255,.6), inset 0 -3px 6px rgba(0,0,0,.22), 0 3px 7px rgba(70,45,5,.45);
+  }
+  /* 캡슐 반사광 */
+  .half.top::after{
+    content:""; position:absolute; left:20%; top:22%; width:34%; height:38%;
+    border-radius:50%; background:rgba(255,255,255,.9); filter:blur(1.5px);
+  }
+  .half.bot{
+    bottom:0; border-radius:0 0 28px 28px;
+    background:linear-gradient(180deg,#FFFFFF 0%, #F3EDDD 55%, #CFC5A9 100%);
+    box-shadow:inset 0 -4px 7px rgba(0,0,0,.22), 0 4px 8px rgba(70,45,5,.4);
+  }
+  .capOut.open .half.top{transform:translateY(-42px) rotate(-24deg);}
   .capOut.open .half.bot{transform:translateY(30px) rotate(12deg);}
-  .capPrize{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.2); font-size:34px; opacity:0; z-index:5;}
+  .capPrize{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.2);
+    font-size:36px; opacity:0; z-index:5;
+    filter:drop-shadow(0 4px 6px rgba(80,50,0,.45));
+  }
   .capOut.open .capPrize{animation:prizepop .5s .12s cubic-bezier(.2,1.5,.4,1) forwards;}
   @keyframes prizepop{to{opacity:1; transform:translate(-50%,-90%) scale(1);}}
 
-  .hint{margin-top:74px; color:#9a8235; font-size:15.5px; font-weight:700;}
+  /* ==========================================================
+     안내 / 도구
+     ========================================================== */
+  .hint{margin-top:78px; color:#5A5273; font-size:16px; font-weight:700; text-shadow:0 1.5px 0 rgba(255,255,255,.65);}
+  .stock{margin-top:10px; font-size:14px; color:#6E6689; font-weight:700;}
+  .tools{margin-top:12px; display:flex; gap:8px; justify-content:center;}
+  .tools button{
+    padding:8px 14px; border:none; border-radius:999px;
+    background:linear-gradient(180deg,#FFFFFF,#F1EEF8); color:#7B7392;
+    font-family:inherit; font-size:12.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 3px 0 #C9C3DC, 0 6px 12px rgba(60,50,90,.20), inset 0 1px 0 #fff;
+    transition:transform .07s, box-shadow .07s;
+  }
+  .tools button:active{transform:translateY(3px); box-shadow:0 0 0 #C9C3DC, inset 0 2px 4px rgba(60,50,90,.28);}
 
-  .result{position:fixed; inset:0; background:rgba(60,45,20,.55); display:none; align-items:center; justify-content:center; padding:24px; z-index:10;}
+  /* ==========================================================
+     결과 카드
+     ========================================================== */
+  .result{position:fixed; inset:0; background:rgba(45,38,68,.58); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; padding:24px; z-index:10; overflow:auto;}
   .result.show{display:flex;}
-  .prizecard{background:var(--card); border-radius:24px; padding:26px 22px; max-width:340px; width:100%;
-    box-shadow:0 20px 50px rgba(0,0,0,.3); text-align:center; transform:translateY(14px) scale(.96); opacity:0; animation:rise .4s ease forwards;}
+  .prizecard{
+    background:linear-gradient(170deg,#FFFFFF 0%,#FDFBFF 55%,#F4F1FA 100%);
+    border-radius:26px; padding:26px 22px; max-width:340px; width:100%; text-align:center;
+    box-shadow:0 6px 0 rgba(90,80,130,.22), 0 26px 60px rgba(30,24,50,.40), inset 0 2px 0 #fff;
+    transform:translateY(14px) scale(.96); opacity:0; animation:rise .4s ease forwards;
+  }
   @keyframes rise{to{transform:translateY(0) scale(1); opacity:1;}}
-  .prizecard .big{font-size:64px; line-height:1;}
-  .prizecard .pname{font-size:24px; color:#e07a97; margin:10px 0 4px;}
+  .prizecard .big{font-size:64px; line-height:1; filter:drop-shadow(0 6px 8px rgba(70,58,110,.32));}
+  .prizecard .pname{font-size:24px; color:var(--pink-d); margin:10px 0 4px; text-shadow:0 1.5px 0 rgba(255,255,255,.9);}
   .prizecard .pdesc{color:var(--muted); font-size:15px; line-height:1.5;}
-  .photo{width:150px; height:190px; object-fit:cover; border-radius:14px; margin:6px auto; display:block; border:4px solid var(--yellow); background:#FFF3CC;}
+  .photo{width:150px; height:190px; object-fit:cover; border-radius:14px; margin:6px auto; display:block;
+    border:4px solid var(--pink); background:#F4F1FA; box-shadow:0 8px 16px rgba(60,50,90,.3);}
   .photo-ph{width:150px; height:190px; border-radius:14px; margin:6px auto; display:flex; align-items:center; justify-content:center;
-    background:#FFF3CC; border:4px dashed var(--gold); color:var(--muted); font-size:13px; text-align:center; padding:10px;}
-  .again{margin-top:18px; width:100%; padding:14px; border:none; border-radius:16px; font-family:inherit; font-size:16px; font-weight:800; color:#7a5618; background:var(--yellow); cursor:pointer;}
-  .close{margin-top:8px; width:100%; padding:12px; border:2px solid var(--line); border-radius:16px; font-family:inherit; font-size:14px; font-weight:700; color:#8a7635; background:#FFF6DE; cursor:pointer;}
+    background:#F7F5FC; border:4px dashed var(--pink); color:var(--muted); font-size:13px; text-align:center; padding:10px;
+    box-shadow:inset 0 3px 8px rgba(80,68,120,.16);}
+  .again{
+    margin-top:18px; width:100%; padding:15px; border:none; border-radius:16px;
+    font-family:inherit; font-size:16px; font-weight:800; color:#fff; cursor:pointer;
+    background:linear-gradient(180deg,#FFB9CA,var(--pink) 45%,var(--pink-d) 100%);
+    box-shadow:0 5px 0 var(--pink-dd), 0 12px 22px rgba(180,80,110,.30), inset 0 1px 0 rgba(255,255,255,.55);
+    transition:transform .07s, box-shadow .07s;
+  }
+  .again:active{transform:translateY(5px); box-shadow:0 0 0 var(--pink-dd), inset 0 3px 6px rgba(120,40,65,.4);}
+  .close{
+    margin-top:10px; width:100%; padding:13px; border:none; border-radius:16px;
+    font-family:inherit; font-size:14px; font-weight:700; color:#7B7392; cursor:pointer;
+    background:linear-gradient(180deg,#FFFFFF,#F1EEF8);
+    box-shadow:0 4px 0 #CFC9E0, inset 0 1px 0 #fff;
+  }
+  .close:active{transform:translateY(4px); box-shadow:none;}
   .leftnote{margin-top:10px; font-size:13px; color:var(--muted);}
-  .stock{margin-top:12px; font-size:14px; color:#9a8235; font-weight:700;}
-  .tools{margin-top:10px; display:flex; gap:8px; justify-content:center;}
-  .tools button{padding:7px 13px; border:2px solid var(--line); border-radius:999px; background:#FFF9E8;
-    font-family:inherit; font-size:12.5px; font-weight:700; color:#a8935a; cursor:pointer;}
-  .logrow{display:flex; align-items:center; gap:9px; padding:9px 11px; border-bottom:1.5px solid var(--line); font-size:14.5px; text-align:left;}
-  .logrow:last-child{border-bottom:none;}
+  .logrow{display:flex; align-items:center; gap:9px; padding:10px 11px; font-size:14.5px; text-align:left;
+    background:linear-gradient(180deg,#fff,#F7F5FC); border-radius:10px; margin-bottom:6px;
+    box-shadow:0 2px 0 rgba(160,150,195,.35), inset 0 1px 0 #fff;}
   .logrow .lp{flex:1; color:var(--ink);}
-  .logrow .lw{color:#e07a97; font-size:13px;}
+  .logrow .lw{color:var(--pink-d); font-size:13px;}
   .logempty{color:var(--muted); font-size:14px; padding:14px 0;}
 </style>
 </head>
@@ -114,24 +334,33 @@
     <h1>🎰 소원 가챠</h1>
     <div class="sub">손잡이를 <b>돌려봐</b></div>
 
-    <div class="machine" id="machine">
-      <div class="dome" id="dome"></div>
-      <div class="body">
-        <div class="slot"></div>
-        <div class="knobwrap"><div class="turnhint"></div><div class="knob" id="knob"></div></div>
-        <div class="chute">
-          <div class="capOut" id="capOut"><div class="tapring"></div><div class="half top" id="capTop"></div><div class="half bot"></div><div class="capPrize" id="capPrize"></div></div>
-          <div class="lip"></div>
+    <div class="stage">
+      <div class="machine" id="machine">
+        <div class="dome" id="dome"><span class="glassedge"></span></div>
+        <div class="neck"></div>
+        <div class="body">
+          <div class="slot"></div>
+          <div class="knobwrap"><div class="turnhint"></div><div class="knob" id="knob"></div></div>
+          <div class="chute">
+            <div class="capOut" id="capOut">
+              <div class="tapring"></div>
+              <div class="half top" id="capTop"></div>
+              <div class="half bot"></div>
+              <div class="capPrize" id="capPrize"></div>
+            </div>
+            <div class="lip"></div>
+          </div>
         </div>
+        <div class="base"></div>
       </div>
     </div>
+
     <div class="hint" id="hint">👆 손잡이를 빙글 돌려봐!</div>
     <div class="stock" id="stock"></div>
     <div class="tools"><button id="logBtn">📋 뽑힌 기록</button><button id="resetBtn">🔄 초기화</button></div>
   </div>
 
   <div class="result" id="logView"><div class="prizecard" id="logCard"></div></div>
-
   <div class="result" id="result"><div class="prizecard" id="prizecard"></div></div>
 
 <script>
@@ -147,7 +376,6 @@ const PRIZES = [
   { id:"miss",       emoji:"😜", name:"꽝!",                     desc:"다음 생에 만나요…", qty:2 },
 ];
 const TOTAL_CAPSULES = PRIZES.reduce((s,p)=>s+(p.qty||1), 0);
-
 /* ===== 재고 — 이 기기에 저장. 수량만큼만 나오고 소진되면 사라진다 ===== */
 const STORE_KEY='sowon_gacha_taken_v2';
 function takenLog(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'[]'); }catch(e){ return []; } }
@@ -160,12 +388,63 @@ function remaining(){
   return out;
 }
 function recordDraw(p){ const a=takenLog(); a.push({ id:p.id, name:p.name, who:'', ts:Date.now() }); saveLog(a); }
+
 const CAP_COLORS=["#FF9CB4","#FFCF45","#8FE3C6","#9AD0FF","#C6BBF3","#FFB03A"];
-(function fillDome(){ const dome=document.getElementById('dome');
-  for(let i=0;i<14;i++){ const c=document.createElement('span'); c.className='caps';
-    const s=26+Math.random()*16; c.style.width=c.style.height=s+'px';
-    c.style.left=(8+Math.random()*78)+'%'; c.style.top=(28+Math.random()*62)+'%';
-    c.style.background=CAP_COLORS[i%CAP_COLORS.length]; c.style.opacity=.9; dome.appendChild(c); } })();
+/* 캡슐 쌓기 — 위에서 하나씩 떨어뜨려 쌓는다 (줄 맞춤 없음)
+   1) 무작위 x 에서 낙하  2) 바닥/다른 캡슐에 닿으면 멈춤
+   3) 하나 위에 걸쳐 있으면 낮은 쪽으로 굴러 내려가 홈에 자리잡음  */
+(function fillDome(){
+  const dome=document.getElementById('dome');
+  const W=238, WALL=8, MAX_TOP=132, COUNT=26;
+  const placed=[];
+
+  /* 이 x, 반지름 r 로 떨어뜨렸을 때 멈추는 높이(중심 y)와 받쳐주는 캡슐 */
+  function drop(x,r){
+    let y=r, on=[];                        // 기본은 바닥에 착지
+    for(const p of placed){
+      const dx=Math.abs(x-p.x), R=r+p.r;
+      if(dx < R-0.02){
+        const yy=p.y+Math.sqrt(R*R-dx*dx);
+        if(yy > y+0.02){ y=yy; on=[p]; }
+        else if(Math.abs(yy-y) <= 0.02){ on.push(p); }
+      }
+    }
+    return { y, on };
+  }
+
+  let guard=0;
+  while(placed.length<COUNT && guard++<3000){
+    const r=15+Math.random()*3.5;
+    let x=WALL+r+Math.random()*(W-2*(WALL+r));
+    let s=drop(x,r);
+
+    /* 한 개 위에 얹혀 있으면 → 경사면을 따라 굴러 떨어짐 */
+    for(let it=0; it<80; it++){
+      if(s.on.length!==1) break;                  // 바닥이거나 두 개가 받치면 안정
+      const dx=x-s.on[0].x;
+      if(Math.abs(dx)<1.2) break;                 // 꼭대기에 정확히 얹힘
+      const nx=Math.min(W-WALL-r, Math.max(WALL+r, x+Math.sign(dx)*1.5));
+      if(nx===x) break;                           // 벽에 막힘
+      const ns=drop(nx,r);
+      if(ns.y <= s.y+0.02){ x=nx; s=ns; } else break;
+    }
+
+    if(s.y+r > MAX_TOP) continue;                 // 너무 높이 쌓이면 버림
+    placed.push({ x, y:s.y, r });
+  }
+
+  /* 낮은 것부터 그려서 위 캡슐이 아래 캡슐을 덮게 */
+  placed.sort((a,b)=>a.y-b.y).forEach(p=>{
+    const cap=document.createElement('span');
+    cap.className='caps';
+    cap.style.width=cap.style.height=(p.r*2).toFixed(1)+'px';
+    cap.style.left=p.x.toFixed(1)+'px';
+    cap.style.bottom=(p.y-p.r).toFixed(1)+'px';
+    cap.style.transform='translateX(-50%)';
+    cap.style.background=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
+    dome.appendChild(cap);
+  });
+})();
 
 /* ===== 사운드 ===== */
 let actx=null;
@@ -189,7 +468,6 @@ let pending=null;   // 나와 있지만 아직 안 연 캡슐의 상품
 const THRESHOLD=300; // 이만큼 돌리면 뽑기
 function angAt(e){ const r=knob.getBoundingClientRect(); return Math.atan2(e.clientY-(r.top+r.height/2), e.clientX-(r.left+r.width/2))*180/Math.PI; }
 knob.addEventListener('pointerdown', e=>{ if(busy) return; dragging=true; turned=0; tickAcc=0; lastAng=angAt(e); AC(); e.preventDefault(); });
-// 이동/떼기는 window 에서 감지 → 손가락이 손잡이 밖으로 나가도 계속 따라 돎
 window.addEventListener('pointermove', e=>{ if(!dragging||busy) return;
   const a=angAt(e); let d=a-lastAng; if(d>180)d-=360; if(d<-180)d+=360; turned+=d; lastAng=a;
   baseRot+=d; knob.style.transform=`rotate(${baseRot}deg)`;
@@ -208,13 +486,11 @@ function dispense(){
   const prize=pickPrize(), col=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
   recordDraw(prize); updateStockUI();
   document.getElementById('capTop').style.background=col;
-  capOut.classList.remove('open','present','tappable'); capPrize.textContent=prize.emoji; capOut.style.transform=''; capOut.style.opacity='';
-  pending = prize;                       // 사용자가 캡슐을 누를 때까지 들고 있는다
-  // 1) 구멍에서 캡슐이 떨어진다
+  capOut.classList.remove('open','present','tappable'); capPrize.textContent=prize.emoji;
+  capOut.style.transform=''; capOut.style.opacity='';
+  pending = prize;                       // 사용자가 누를 때까지 들고 있는다
   capOut.classList.remove('drop'); void capOut.offsetWidth; capOut.classList.add('drop');
-  // 2) 앞으로 들어올려 보여주고 — 여기서 멈춘다
   setTimeout(()=>{ capOut.classList.remove('drop'); capOut.classList.add('present'); hint.textContent='캡슐이 나왔다! 🥚'; }, 700);
-  // 3) 이제 눌러서 열 수 있다 (자동으로 열리지 않는다)
   setTimeout(()=>{ capOut.classList.add('tappable'); hint.textContent='👆 캡슐을 눌러서 열어봐!'; }, 700+500);
 }
 /* 캡슐을 눌렀을 때만 열린다 */
@@ -254,7 +530,6 @@ function updateStockUI(){
   const el=document.getElementById('stock');
   if(el) el.textContent = left ? `🎁 남은 캡슐 ${left} / ${TOTAL_CAPSULES}개` : '🎁 캡슐 모두 소진';
 }
-
 /* ===== 뽑힌 기록 / 초기화 ===== */
 function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 document.getElementById('logBtn').onclick=()=>{
@@ -264,7 +539,7 @@ document.getElementById('logBtn').onclick=()=>{
     : `<div class="logempty">아직 아무도 안 뽑았어</div>`;
   document.getElementById('logCard').innerHTML =
     `<div class="pname" style="margin-top:0">📋 뽑힌 기록</div>
-     <div class="pdesc" style="margin-bottom:10px">${log.length}개 나감 · 남은 ${remaining().length}개</div>
+     <div class="pdesc" style="margin-bottom:12px">${log.length}개 나감 · 남은 ${remaining().length}개</div>
      ${rows}<button class="close" id="logClose" style="margin-top:16px">닫기</button>`;
   document.getElementById('logView').classList.add('show');
   document.getElementById('logClose').onclick=()=> document.getElementById('logView').classList.remove('show');
@@ -274,7 +549,6 @@ document.getElementById('resetBtn').onclick=()=>{
   saveLog([]); reset(); machine.classList.remove('busy');
   hint.textContent='👆 손잡이를 빙글 돌려봐!'; updateStockUI();
 };
-
 /* 시작 상태 */
 updateStockUI();
 if(!remaining().length) soldOut();
