@@ -182,12 +182,7 @@
     background:linear-gradient(90deg,#D9CFB4 0%, #FFFFFF 35%, #FFFFFF 55%, #C7BC9C 100%);
     box-shadow:0 2px 5px rgba(80,50,0,.45), inset 0 1px 0 rgba(255,255,255,.9);
   }
-  .turnhint{
-    position:absolute; inset:-11px; border-radius:50%; border:3px dashed rgba(217,116,143,.55);
-    animation:spinhint 3s linear infinite; pointer-events:none;
-  }
   @keyframes spinhint{to{transform:rotate(360deg);}}
-  .machine.busy .turnhint{display:none;}
 
   /* 배출구 */
   .chute{
@@ -334,7 +329,7 @@
         <div class="neck"></div>
         <div class="body">
           <div class="slot"></div>
-          <div class="knobwrap"><div class="turnhint"></div><div class="knob" id="knob"></div></div>
+          <div class="knobwrap"><div class="knob" id="knob"></div></div>
           <div class="chute">
             <div class="capOut" id="capOut">
               <div class="tapring"></div>
@@ -477,7 +472,7 @@ function dispense(){
   busy=true; machine.classList.add('busy'); hint.textContent='두구두구… 🥁';
   machine.classList.remove('shake'); void machine.offsetWidth; machine.classList.add('shake');
   const prize=pickPrize(), col=CAP_COLORS[(Math.random()*CAP_COLORS.length)|0];
-  recordDraw(prize); updateStockUI();
+  // 재고는 캡슐을 '열었을 때' 깎는다 — 안 열고 나가면 상품이 증발하기 때문
   document.getElementById('capTop').style.background=col;
   capOut.classList.remove('open','present','tappable');
   capOut.style.transform=''; capOut.style.opacity='';
@@ -492,6 +487,7 @@ function openCapsule(){
   capOut.classList.remove('tappable');
   crack(); capOut.classList.add('open'); hint.textContent='짠! 🎉';
   const p=pending; pending=null;
+  recordDraw(p); updateStockUI();
   setTimeout(()=>{ ding(); showResult(p); }, 520);
 }
 capOut.addEventListener('click', openCapsule);
