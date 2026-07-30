@@ -441,6 +441,14 @@ input::placeholder{color:#D9CDBB; font-family:"Gowun Dodum",sans-serif; font-siz
     <button class="btn ghost tiny" id="hostResetBtn">🔄 전체 기록 초기화</button>
     <button class="linkish" id="playerLink">← 참가자 화면으로</button>
   </div>
+
+  <!-- ============ 7. 문항 검토 (?preview=1) ============ -->
+  <div id="scPreview" class="screen hidden">
+    <div class="deco"><span>📝</span></div>
+    <h1>문항 검토</h1>
+    <p class="sub">파티 전에 문제랑 정답을 확인하는 화면이야<br>참가자에게는 안 보여</p>
+    <div id="previewList"></div>
+  </div>
 </div>
 </div>
 
@@ -582,7 +590,8 @@ let decoT; window.addEventListener('resize', ()=>{ clearTimeout(decoT); decoT=se
 const $ = s=>document.querySelector(s);
 const SCREENS = {
   join:$('#scJoin'), lobby:$('#scLobby'), q:$('#scQ'),
-  reveal:$('#scReveal'), final:$('#scFinal'), hostLobby:$('#scHostLobby')
+  reveal:$('#scReveal'), final:$('#scFinal'), hostLobby:$('#scHostLobby'),
+  preview:$('#scPreview')
 };
 let currentScreen='';
 function show(name){
@@ -606,6 +615,7 @@ const store = {
    상태
    ============================================================ */
 const IS_HOST = new URLSearchParams(location.search).has('host');
+const IS_PREVIEW = new URLSearchParams(location.search).has('preview');
 let myId = store.get('sowonquiz_pid');
 if(!myId){ myId = 'p'+Math.random().toString(36).slice(2,10); store.set('sowonquiz_pid', myId); }
 
@@ -627,6 +637,7 @@ function refreshStatus(){
 }
 window.addEventListener('quizdb-sync', refreshStatus);
 function initDB(){
+  if(IS_PREVIEW) return;              // 검토 화면은 DB 와 무관하게 문항만 보여준다
   if(!window.QuizDB) return;
   refreshStatus();
   $('#joinBtn').disabled=false;
@@ -641,6 +652,8 @@ window.addEventListener('quizdb-error', ()=> setStatus('err', window.__quizErr||
 $('#joinBtn').disabled=true;
 /* 연결이 늦어져도 버튼이 영영 죽은 채로 남지 않게 — 눌리면 이유라도 말해준다 */
 setTimeout(()=>{ if(!window.QuizDB) $('#joinBtn').disabled=false; }, 5000);
+
+if(IS_PREVIEW){ setStatus('host','📝 문항 검토 모드'); renderPreview(); show('preview'); }
 if(window.QuizDB) initDB();
 
 /* ============================================================
@@ -928,6 +941,27 @@ function renderFinal(isHost){
     ? `<div class="hostbar"><button class="btn lav" id="againBtn">🔄 새 게임 시작 (기록 초기화)</button></div>`
     : `<div class="live"><span class="pulse"></span>진행자가 새 게임을 열면 자동으로 넘어가</div>`;
   if(isHost) $('#againBtn').onclick = hostReset;
+}
+
+/* ---------- 문항 검토 화면 ---------- */
+function renderPreview(){
+  const box=$('#previewList');
+  box.innerHTML = QUESTIONS.map((item,qi)=>{
+    const opts = item.opts.map((o,i)=>{
+      const im = item.imgs && item.imgs[i] ? `<img class="optimg" src="${item.imgs[i]}" alt="">` : '';
+      const ok = i===item.a;
+      return `<div class="opt static ${ok?'correct':'dim'}">
+                <span class="tag">${letter(i)}</span>${im}<span class="txt">${esc(o)}</span>
+                ${ok?'<span class="mark">정답</span>':''}
+              </div>`;
+    }).join('');
+    return `<div style="margin-bottom:26px">
+              <div class="q" style="min-height:auto; margin-bottom:12px">
+                <span style="color:#F2718E">${qi+1}.</span> ${esc(item.q)}
+              </div>${opts}
+            </div>`;
+  }).join('')
+  + `<div class="lobbybox"><div class="cnt">총 ${QUESTIONS.length}문항</div></div>`;
 }
 
 /* ---------- 이미지 저장 / 컨페티 ---------- */
