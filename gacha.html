@@ -43,8 +43,9 @@
   .chute .lip{position:absolute; left:0; right:0; bottom:0; height:12px; background:#5f4711; border-radius:0 0 8px 8px; z-index:4;}
 
   /* 캡슐 (두 반쪽) */
+  /* pointer-events:none 필수 — 안 그러면 대기 중인 투명 캡슐이 손잡이 위를 덮어 드래그를 가로챈다 */
   .capOut{position:absolute; left:50%; top:4px; width:54px; height:54px; margin-left:-27px; z-index:3;
-    transform:translateY(-78px); opacity:0;}
+    transform:translateY(-78px); opacity:0; pointer-events:none;}
   .capOut.drop{animation:capdrop .7s cubic-bezier(.3,.8,.4,1.2) forwards;}
   /* 배출구 안(0~24px)에 있는 동안은 안 보이다가, 입구를 지나면서 나타난다 */
   @keyframes capdrop{
