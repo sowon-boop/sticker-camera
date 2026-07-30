@@ -216,10 +216,17 @@ input::placeholder{color:#C4BDAC; font-family:"Gowun Batang",serif; font-weight:
   transition:background .15s, color .15s;
 }
 .opt .txt{flex:1;}
-/* 이름 없이 이미지만 보여주는 문항 — 크게 */
-.opt.imgonly{padding:9px 10px;}
-.opt.imgonly .optimg{flex:0 0 108px; width:108px; height:108px;}
-.opt.imgonly .txt{display:none;}
+/* 이름 없이 이미지만 보여주는 문항 — 2×2 격자로 크게 (4개가 한 화면에 들어오게) */
+.opts.grid2{display:grid; grid-template-columns:1fr 1fr; gap:9px;}
+.opts.grid2 .opt{
+  flex-direction:column; gap:7px; padding:10px 8px 9px;
+  border:1px solid var(--rule2); background:#FFFDF6;
+}
+.opts.grid2 .opt:first-child{border-top:1px solid var(--rule2);}
+.opts.grid2 .opt .optimg{flex:none; width:100%; height:auto; aspect-ratio:3/4; border:none; background:#fff; padding:0;}
+.opts.grid2 .opt .txt{display:none;}
+.opts.grid2 .opt .bub{order:2;}
+.opts.grid2 .opt .pickers{max-width:100%; justify-content:center;}
 /* 이미지 보기 — 배경 있는 그림과 없는 그림이 섞여도 같아 보이게 흰 칸 위에 얹는다 */
 .opt .optimg{
   flex:0 0 46px; width:46px; height:46px; object-fit:contain;
@@ -852,7 +859,7 @@ function renderQ(isHost){
     $('#qnum').textContent = (idx+1)+'.';
     $('#qtext').textContent = item.q;
 
-    const box=$('#opts'); box.innerHTML='';
+    const box=$('#opts'); box.className='opts'+(item.imgOnly?' grid2':''); box.innerHTML='';
     item.opts.forEach((o,i)=>{
       const b=document.createElement('button');
       let cls='opt';
@@ -907,7 +914,7 @@ function renderReveal(isHost){
   $('#rvStamp').textContent = `정답 ${CIRCLED[item.a]}`;
   $('#rvRate').textContent = got.length ? `정답률 ${Math.round(right/got.length*100)}% (${right}/${got.length}명)` : '응답 없음';
 
-  const box=$('#rvOpts'); box.innerHTML='';
+  const box=$('#rvOpts'); box.className='opts'+(item.imgOnly?' grid2':''); box.innerHTML='';
   item.opts.forEach((o,i)=>{
     const who=got.filter(a=>a.choice===i);
     const d=document.createElement('div');
@@ -1021,7 +1028,7 @@ function renderPreview(){
     }).join('');
     return `<div class="pvblock">
               <div class="pvq"><span class="n">${qi+1}.</span>${esc(item.q)}</div>
-              <div class="opts">${opts}</div>
+              <div class="opts${item.imgOnly?' grid2':''}">${opts}</div>
             </div>`;
   }).join('') + `<div class="seatbox"><div class="cap">총 ${TOTAL}문항</div></div>`;
 }
